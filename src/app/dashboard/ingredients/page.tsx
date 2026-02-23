@@ -1,0 +1,259 @@
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import { Plus, Search, Droplet, Edit2, Trash2, X, Check, AlertCircle } from 'lucide-react';
+
+export default function IngredientsPage() {
+    const [ingredients, setIngredients] = useState<any[]>([]);
+    const [search, setSearch] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [selectedIngredient, setSelectedIngredient] = useState<any>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [formData, setFormData] = useState({ name: '', unit: 'ml', stock: '0' });
+
+    useEffect(() => {
+        fetchIngredients();
+    }, []);
+
+    const fetchIngredients = async () => {
+        const res = await fetch('/api/ingredients');
+        const data = await res.json();
+        setIngredients(data);
+    };
+
+    const handleOpenAdd = () => {
+        setSelectedIngredient(null);
+        setFormData({ name: '', unit: 'ml', stock: '0' });
+        setIsModalOpen(true);
+    };
+
+    const handleOpenEdit = (item: any) => {
+        setSelectedIngredient(item);
+        setFormData({ name: item.name, unit: item.unit, stock: item.stock.toString() });
+        setIsModalOpen(true);
+    };
+
+    const handleOpenDelete = (item: any) => {
+        setSelectedIngredient(item);
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            const url = selectedIngredient ? `/api/ingredients/${selectedIngredient.id}` : '/api/ingredients';
+            const method = selectedIngredient ? 'PATCH' : 'POST';
+
+            await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            setIsModalOpen(false);
+            fetchIngredients();
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!selectedIngredient) return;
+        setIsSubmitting(true);
+        try {
+            await fetch(`/api/ingredients/${selectedIngredient.id}`, { method: 'DELETE' });
+            setIsDeleteModalOpen(false);
+            fetchIngredients();
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="p-6 md:p-10">
+            <header className="flex justify-between items-end mb-10">
+                <div>
+                    <h1 className="text-3xl font-bold premium-gradient-text">Bahan Baku</h1>
+                    <p className="text-gray-400 mt-1">Kelola persediaan biang parfum, alkohol, dan pelarut.</p>
+                </div>
+                <button
+                    onClick={handleOpenAdd}
+                    className="bg-foreground text-background px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:bg-accent-gold transition-all"
+                >
+                    <Plus size={20} />
+                    Tambah Bahan
+                </button>
+            </header>
+
+            {/* Filter & Search */}
+            <div className="mb-8 flex gap-4">
+                <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                    <input
+                        type="text"
+                        placeholder="Cari bahan baku..."
+                        className="w-full bg-surface border border-border rounded-xl py-2.5 pl-12 pr-4 outline-none focus:border-accent-gold transition-all"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
+            </div>
+
+            {/* Table */}
+            <div className="glass-panel rounded-2xl overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-background/50 text-gray-400 text-sm border-b border-border">
+                            <tr>
+                                <th className="px-6 py-4 font-medium uppercase tracking-wider">Nama Bahan</th>
+                                <th className="px-6 py-4 font-medium uppercase tracking-wider">Stok Saat Ini</th>
+                                <th className="px-6 py-4 font-medium uppercase tracking-wider">Satuan</th>
+                                <th className="px-6 py-4 font-medium uppercase tracking-wider text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {ingredients.filter(i => i.name.toLowerCase().includes(search.toLowerCase())).map((item) => (
+                                <tr key={item.id} className="hover:bg-surface/30 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-background rounded-lg border border-border">
+                                                <Droplet size={16} className="text-accent-gold" />
+                                            </div>
+                                            <span className="font-medium">{item.name}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`font-bold ${item.stock < 100 ? 'text-red-400' : 'text-accent-emerald'}`}>
+                                            {item.stock}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-gray-400">{item.unit}</td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                onClick={() => handleOpenEdit(item)}
+                                                className="p-2 text-gray-400 hover:text-accent-gold transition-colors"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleOpenDelete(item)}
+                                                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            {ingredients.length === 0 && (
+                                <tr>
+                                    <td colSpan={4} className="px-6 py-10 text-center text-gray-500">
+                                        Belum ada bahan baku.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Modal Add/Edit */}
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="glass-panel w-full max-w-md rounded-2xl overflow-hidden shadow-2xl animate-scale-in">
+                        <div className="p-6 border-b border-border flex justify-between items-center">
+                            <h2 className="text-xl font-bold">{selectedIngredient ? 'Edit Bahan Baku' : 'Tambah Bahan Baku Baru'}</h2>
+                            <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-white"><X size={20} /></button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-1">Nama Bahan</label>
+                                <input
+                                    required
+                                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-accent-gold"
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-1">Satuan</label>
+                                    <select
+                                        className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-accent-gold"
+                                        value={formData.unit}
+                                        onChange={e => setFormData({ ...formData, unit: e.target.value })}
+                                    >
+                                        <option value="ml">ml</option>
+                                        <option value="gr">gr</option>
+                                        <option value="drop">drop</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-1">Stok</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-accent-gold"
+                                        value={formData.stock}
+                                        onChange={e => setFormData({ ...formData, stock: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="pt-4 flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="flex-1 px-4 py-3 rounded-xl border border-border hover:bg-surface transition-all font-bold"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="flex-1 px-4 py-3 rounded-xl bg-foreground text-background font-bold hover:bg-accent-gold transition-all disabled:opacity-50"
+                                >
+                                    {isSubmitting ? 'Menyimpan...' : 'Simpan Bahan'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Delete Confirmation */}
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="glass-panel w-full max-w-sm rounded-2xl p-8 text-center animate-scale-in">
+                        <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <AlertCircle size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold mb-2">Hapus Bahan Baku?</h3>
+                        <p className="text-gray-400 mb-8 text-sm">Tindakan ini tidak dapat dibatalkan. Pastikan bahan ini tidak sedang digunakan dalam formula produk.</p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setIsDeleteModalOpen(false)}
+                                className="flex-1 px-4 py-3 rounded-xl border border-border hover:bg-surface transition-all font-bold"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                disabled={isSubmitting}
+                                className="flex-1 px-4 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all disabled:opacity-50"
+                            >
+                                {isSubmitting ? 'Menghapus...' : 'Ya, Hapus'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
