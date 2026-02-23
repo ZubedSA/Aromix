@@ -25,6 +25,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user?.storeId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const storeId = session.user.storeId as string;
 
         const productId = params.id;
         const { name, price, stock, isFormula, formulaItems } = await req.json();
