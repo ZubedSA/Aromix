@@ -47,6 +47,7 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 try {
+                    console.log('[AUTH DEBUG]: Authorizing', credentials.email);
                     const user = await prisma.user.findUnique({
                         where: { email: credentials.email },
                         include: {
@@ -57,14 +58,17 @@ export const authOptions: NextAuthOptions = {
                     });
 
                     if (!user) {
+                        console.log('[AUTH DEBUG]: User not found');
                         throw new Error("Email atau password salah.");
                     }
 
                     const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
                     if (!isPasswordValid) {
+                        console.log('[AUTH DEBUG]: Invalid password');
                         throw new Error("Email atau password salah.");
                     }
 
+                    console.log('[AUTH DEBUG]: Login success for', user.email);
                     return {
                         id: user.id,
                         email: user.email,
