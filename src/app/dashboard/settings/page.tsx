@@ -213,7 +213,14 @@ export default function SettingsPage() {
     );
 }
 
-function TabButton({ active, onClick, icon, label }: any) {
+interface TabButtonProps {
+    active: boolean;
+    onClick: () => void;
+    icon: React.ReactNode;
+    label: string;
+}
+
+function TabButton({ active, onClick, icon, label }: TabButtonProps) {
     return (
         <button
             onClick={onClick}
@@ -225,7 +232,15 @@ function TabButton({ active, onClick, icon, label }: any) {
     );
 }
 
-function FormInput({ label, type = "text", value, onChange, disabled = false }: any) {
+interface FormInputProps {
+    label: string;
+    type?: string;
+    value: string;
+    onChange: (v: string) => void;
+    disabled?: boolean;
+}
+
+function FormInput({ label, type = "text", value, onChange, disabled = false }: FormInputProps) {
     return (
         <div>
             <label className="block text-sm text-gray-400 mb-1.5">{label}</label>
