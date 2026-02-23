@@ -7,9 +7,10 @@ export async function GET() {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user?.storeId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const storeId = session.user.storeId as string;
 
         const customers = await prisma.customer.findMany({
-            where: { storeId: session.user.storeId },
+            where: { storeId },
             include: {
                 _count: {
                     select: { transactions: true }
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user?.storeId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const storeId = session.user.storeId as string;
 
         const { name, phone, email, notes } = await req.json();
 
@@ -37,7 +39,7 @@ export async function POST(req: Request) {
                 phone,
                 email,
                 notes,
-                storeId: session.user.storeId
+                storeId
             }
         });
 

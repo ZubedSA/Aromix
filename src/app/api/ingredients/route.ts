@@ -8,7 +8,7 @@ export async function GET() {
     if (!session?.user?.storeId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const ingredients = await prisma.ingredient.findMany({
-        where: { storeId: session.user.storeId },
+        where: { storeId },
         orderBy: { name: 'asc' }
     });
 
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
             name,
             unit,
             stock: parseFloat(stock),
-            storeId: session.user.storeId
+            storeId
         }
     });
 

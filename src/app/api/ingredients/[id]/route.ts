@@ -15,7 +15,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
             where: { id: ingredientId }
         });
 
-        if (!ingredient || ingredient.storeId !== session.user.storeId) {
+        if (!ingredient || ingredient.storeId !== storeId) {
             return NextResponse.json({ error: 'Not Found' }, { status: 404 });
         }
 
@@ -38,7 +38,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         const data = await req.json();
 
         const updated = await prisma.ingredient.update({
-            where: { id: ingredientId, storeId: session.user.storeId },
+            where: { id: ingredientId, storeId },
             data: {
                 name: data.name,
                 unit: data.unit,
