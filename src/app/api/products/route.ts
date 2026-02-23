@@ -6,9 +6,10 @@ import { prisma } from '@/lib/prisma';
 export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session?.user?.storeId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const storeId = session.user.storeId as string;
 
     const products = await prisma.product.findMany({
-        where: { storeId: session.user.storeId },
+        where: { storeId },
         include: { formula: { include: { items: { include: { ingredient: true } } } } },
         orderBy: { name: 'asc' }
     });

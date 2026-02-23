@@ -11,7 +11,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
         const productId = params.id;
 
         await prisma.product.delete({
-            where: { id: productId, storeId: session.user.storeId }
+            where: { id: productId, storeId }
         });
 
         return NextResponse.json({ success: true });
@@ -30,7 +30,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
         const product = await prisma.$transaction(async (tx) => {
             const updatedProduct = await tx.product.update({
-                where: { id: productId, storeId: session.user.storeId },
+                where: { id: productId, storeId },
                 data: {
                     name,
                     price: parseFloat(price),
@@ -46,7 +46,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                 await tx.formula.create({
                     data: {
                         productId,
-                        storeId: session.user.storeId,
+                        storeId,
                         items: {
                             create: formulaItems.map((fi: any) => ({
                                 ingredientId: fi.ingredientId,
