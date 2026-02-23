@@ -7,6 +7,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user?.storeId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const storeId = session.user.storeId;
 
         const ingredientId = params.id;
 
@@ -33,6 +34,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user?.storeId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const storeId = session.user.storeId;
 
         const ingredientId = params.id;
         const data = await req.json();
