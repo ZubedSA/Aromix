@@ -81,11 +81,11 @@ export default function CustomersPage() {
     );
 
     return (
-        <div className="p-6 md:p-10">
-            <header className="flex justify-between items-end mb-10">
-                <div>
+        <div className="p-4 sm:p-6 md:p-10 pb-28 md:pb-10">
+            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4">
+                <div className="max-w-full">
                     <h1 className="text-3xl font-bold premium-gradient-text">Pelanggan</h1>
-                    <p className="text-gray-400 mt-1">Kelola data pelanggan tetap dan riwayat mereka.</p>
+                    <p className="text-gray-400 mt-1 break-words">Kelola data pelanggan tetap dan riwayat mereka.</p>
                 </div>
                 <button
                     onClick={handleOpenAdd}
@@ -97,12 +97,12 @@ export default function CustomersPage() {
             </header>
 
             <div className="mb-8 flex gap-4">
-                <div className="relative flex-1 max-w-md">
+                <div className="relative flex-1 w-full max-w-md">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                     <input
                         type="text"
                         placeholder="Cari nama atau telepon..."
-                        className="w-full bg-surface border border-border rounded-xl py-2.5 pl-12 pr-4 outline-none focus:border-accent-gold transition-all"
+                        className="w-full bg-surface border border-border rounded-xl py-2.5 pl-12 pr-4 outline-none focus:border-accent-gold transition-all text-sm"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />

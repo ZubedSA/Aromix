@@ -8,13 +8,29 @@ export async function GET() {
     if (!session?.user?.storeId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const storeId = session.user.storeId as string;
 
-    const products = await prisma.product.findMany({
-        where: { storeId },
-        include: { formula: { include: { items: { include: { ingredient: true } } } } },
-        orderBy: { name: 'asc' }
-    });
+    try {
+        const products = await prisma.product.findMany({
+            where: { storeId },
+            include: {
+                formula: {
+                    include: {
+                        items: {
+                            include: {
+                                ingredient: true,
+                                product: true
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: { name: 'asc' }
+        });
 
-    return NextResponse.json(products);
+        return NextResponse.json(products);
+    } catch (error: any) {
+        console.error("GET Products Error:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 }
 
 export async function POST(req: Request) {
@@ -24,34 +40,40 @@ export async function POST(req: Request) {
     const { name, price, stock, isFormula, formulaItems } = await req.json();
     const storeId = session.user.storeId;
 
-    const product = await prisma.$transaction(async (tx) => {
-        const newProduct = await tx.product.create({
-            data: {
-                name,
-                price: parseFloat(price),
-                stock: parseInt(stock),
-                isFormula,
-                storeId
-            }
-        });
-
-        if (isFormula && formulaItems && formulaItems.length > 0) {
-            await tx.formula.create({
+    try {
+        const product = await prisma.$transaction(async (tx) => {
+            const newProduct = await tx.product.create({
                 data: {
-                    productId: newProduct.id,
-                    storeId,
-                    items: {
-                        create: formulaItems.map((fi: any) => ({
-                            ingredientId: fi.ingredientId,
-                            quantity: parseFloat(fi.quantity)
-                        }))
-                    }
+                    name,
+                    price: parseFloat(price),
+                    stock: parseFloat(stock),
+                    isFormula,
+                    storeId
                 }
             });
-        }
 
-        return newProduct;
-    });
+            if (isFormula && formulaItems && formulaItems.length > 0) {
+                await tx.formula.create({
+                    data: {
+                        productId: newProduct.id,
+                        storeId,
+                        items: {
+                            create: formulaItems.map((fi: any) => ({
+                                ingredientId: fi.ingredientId || null,
+                                productId: fi.productId || null,
+                                quantity: parseFloat(fi.quantity)
+                            }))
+                        }
+                    }
+                });
+            }
 
-    return NextResponse.json(product);
+            return newProduct;
+        });
+
+        return NextResponse.json(product);
+    } catch (error: any) {
+        console.error("POST Product Error:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 }

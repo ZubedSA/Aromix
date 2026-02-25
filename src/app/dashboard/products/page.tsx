@@ -1,48 +1,46 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Package, Edit2, Trash2, Beaker, X, AlertCircle } from 'lucide-react';
+import { Plus, Search, Package, Edit2, Trash2, Beaker, X, AlertCircle, ShoppingBag, Eye } from 'lucide-react';
 
 export default function ProductsPage() {
     const [products, setProducts] = useState<any[]>([]);
     const [ingredients, setIngredients] = useState<any[]>([]);
+    const [allProducts, setAllProducts] = useState<any[]>([]);
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [formData, setFormData] = useState({
+    const initialForm = {
         name: '',
         price: '',
         stock: '0',
-        isFormula: true,
-        formulaItems: [] as any[]
-    });
+        isFormula: false,
+        formulaItems: [{ ingredientId: '', productId: '', quantity: '' }]
+    };
+    const [formData, setFormData] = useState(initialForm);
 
     useEffect(() => {
         fetchData();
     }, []);
 
     const fetchData = async () => {
-        const [pRes, iRes] = await Promise.all([
+        const [prodRes, ingRes] = await Promise.all([
             fetch('/api/products'),
             fetch('/api/ingredients')
         ]);
-        const [pData, iData] = await Promise.all([pRes.json(), iRes.json()]);
-        setProducts(pData);
-        setIngredients(iData);
+        const prodData = await prodRes.json();
+        const ingData = await ingRes.json();
+        setProducts(prodData);
+        setAllProducts(prodData);
+        setIngredients(ingData);
     };
 
     const handleOpenAdd = () => {
         setSelectedProduct(null);
-        setFormData({
-            name: '',
-            price: '',
-            stock: '0',
-            isFormula: true,
-            formulaItems: []
-        });
+        setFormData(initialForm);
         setIsModalOpen(true);
     };
 
@@ -55,6 +53,7 @@ export default function ProductsPage() {
             isFormula: product.isFormula,
             formulaItems: product.formula?.items?.map((item: any) => ({
                 ingredientId: item.ingredientId,
+                productId: item.productId,
                 quantity: item.quantity.toString()
             })) || []
         });
@@ -69,7 +68,7 @@ export default function ProductsPage() {
     const addFormulaItem = () => {
         setFormData({
             ...formData,
-            formulaItems: [...formData.formulaItems, { ingredientId: '', quantity: '' }]
+            formulaItems: [...formData.formulaItems, { ingredientId: '', productId: '', quantity: '' }]
         });
     };
 
@@ -122,29 +121,38 @@ export default function ProductsPage() {
     };
 
     return (
-        <div className="p-6 md:p-10">
-            <header className="flex justify-between items-end mb-10">
-                <div>
-                    <h1 className="text-3xl font-bold premium-gradient-text">Produk Parfum</h1>
-                    <p className="text-gray-400 mt-1">Daftar produk jadi dan racikan yang tersedia untuk dijual.</p>
+        <div className="p-4 sm:p-6 md:p-10 pb-28 md:pb-10">
+            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4">
+                <div className="max-w-full">
+                    <h1 className="text-3xl font-bold premium-gradient-text">Produk & Katalog</h1>
+                    <p className="text-gray-400 mt-1 break-words">Kelola produk jadi, racikan (formula), dan katalog menu untuk pelanggan.</p>
                 </div>
-                <button
-                    onClick={handleOpenAdd}
-                    className="bg-foreground text-background px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:bg-accent-gold transition-all"
-                >
-                    <Plus size={20} />
-                    Tambah Produk
-                </button>
+                <div className="flex flex-wrap gap-3">
+                    <button
+                        onClick={() => window.location.href = '/dashboard/menu'}
+                        className="bg-surface border border-border px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:border-accent-gold/50 transition-all text-sm"
+                    >
+                        <Eye size={18} />
+                        Lihat Katalog (Mode Menu)
+                    </button>
+                    <button
+                        onClick={handleOpenAdd}
+                        className="bg-foreground text-background px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:bg-accent-gold transition-all text-sm"
+                    >
+                        <Plus size={20} />
+                        Tambah Produk
+                    </button>
+                </div>
             </header>
 
             {/* Filter & Search */}
             <div className="mb-8 flex gap-4">
-                <div className="relative flex-1 max-w-md">
+                <div className="relative flex-1 w-full max-w-md">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                     <input
                         type="text"
                         placeholder="Cari produk..."
-                        className="w-full bg-surface border border-border rounded-xl py-2.5 pl-12 pr-4 outline-none focus:border-accent-gold transition-all"
+                        className="w-full bg-surface border border-border rounded-xl py-2.5 pl-12 pr-4 outline-none focus:border-accent-gold transition-all text-sm"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
@@ -185,13 +193,22 @@ export default function ProductsPage() {
                         </div>
 
                         {product.isFormula && product.formula?.items && (
-                            <div className="mt-3 flex flex-wrap gap-2">
-                                {product.formula.items.slice(0, 3).map((fi: any) => (
-                                    <span key={fi.id} className="text-[10px] bg-background border border-border px-2 py-0.5 rounded text-gray-400">
-                                        {fi.ingredient.name} {fi.quantity}{fi.ingredient.unit}
-                                    </span>
-                                ))}
-                                {product.formula.items.length > 3 && <span className="text-[10px] text-gray-600">+{product.formula.items.length - 3} lagi</span>}
+                            <div className="mt-3 space-y-2">
+                                {product.formula.items.length === 0 ? (
+                                    <div className="flex items-center gap-1.5 text-red-500 bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/10 animate-pulse">
+                                        <AlertCircle size={14} />
+                                        <span className="text-[10px] font-bold uppercase tracking-tight">Formula Kosong!</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-wrap gap-2">
+                                        {product.formula.items.slice(0, 3).map((fi: any) => (
+                                            <span key={fi.id} className="text-[10px] bg-background border border-border px-2 py-0.5 rounded text-gray-400">
+                                                {fi.ingredient?.name || fi.product?.name} {fi.quantity}{fi.ingredient?.unit || 'ml'}
+                                            </span>
+                                        ))}
+                                        {product.formula.items.length > 3 && <span className="text-[10px] text-gray-600">+{product.formula.items.length - 3} lagi</span>}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -286,17 +303,36 @@ export default function ProductsPage() {
                                         {formData.formulaItems.map((fi, index) => (
                                             <div key={index} className="flex gap-3 items-end animate-fade-in">
                                                 <div className="flex-1">
-                                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase">Bahan Baku</label>
+                                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase">Bahan Baku / Produk Dasar</label>
                                                     <select
                                                         required
                                                         className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-accent-gold"
-                                                        value={fi.ingredientId}
-                                                        onChange={e => updateFormulaItem(index, 'ingredientId', e.target.value)}
+                                                        value={fi.ingredientId ? `ing:${fi.ingredientId}` : fi.productId ? `prod:${fi.productId}` : ''}
+                                                        onChange={e => {
+                                                            const val = e.target.value;
+                                                            if (val.startsWith('ing:')) {
+                                                                updateFormulaItem(index, 'ingredientId', val.replace('ing:', ''));
+                                                                updateFormulaItem(index, 'productId', '');
+                                                            } else if (val.startsWith('prod:')) {
+                                                                updateFormulaItem(index, 'productId', val.replace('prod:', ''));
+                                                                updateFormulaItem(index, 'ingredientId', '');
+                                                            } else {
+                                                                updateFormulaItem(index, 'ingredientId', '');
+                                                                updateFormulaItem(index, 'productId', '');
+                                                            }
+                                                        }}
                                                     >
-                                                        <option value="">Pilih Bahan...</option>
-                                                        {ingredients.map(i => (
-                                                            <option key={i.id} value={i.id}>{i.name} ({i.unit})</option>
-                                                        ))}
+                                                        <option value="">Pilih Sumber...</option>
+                                                        <optgroup label="Bahan Baku (Biang/Alkohol)">
+                                                            {ingredients.map(i => (
+                                                                <option key={i.id} value={`ing:${i.id}`}>{i.name} ({i.unit})</option>
+                                                            ))}
+                                                        </optgroup>
+                                                        <optgroup label="Produk Lain (Parfum Dasar)">
+                                                            {allProducts.filter(p => !selectedProduct || p.id !== selectedProduct.id).map(p => (
+                                                                <option key={p.id} value={`prod:${p.id}`}>{p.name} (ml)</option>
+                                                            ))}
+                                                        </optgroup>
                                                     </select>
                                                 </div>
                                                 <div className="w-24">

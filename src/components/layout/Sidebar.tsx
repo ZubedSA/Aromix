@@ -12,7 +12,9 @@ import {
     Droplet,
     ShieldCheck,
     LayoutDashboard,
-    History as HistoryIcon
+    History as HistoryIcon,
+    Beaker,
+    ShoppingBag
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
@@ -73,56 +75,40 @@ export default function Sidebar() {
                         />
                         <SidebarLink
                             icon={<HistoryIcon size={20} />}
-                            label="Riwayat"
+                            label="Riwayat & Laporan"
                             href="/dashboard/transactions"
-                            active={pathname === '/dashboard/transactions'}
+                            active={pathname === '/dashboard/transactions' || pathname === '/dashboard/reports'}
                         />
-                        {role === 'OWNER' && (
-                            <SidebarLink
-                                icon={<BarChart3 size={20} />}
-                                label="Laporan Omzet"
-                                href="/dashboard/reports"
-                                active={pathname === '/dashboard/reports'}
-                            />
-                        )}
                         <SidebarLink
                             icon={<Package size={20} />}
-                            label="Produk Parfum"
+                            label="Produk & Katalog"
                             href="/dashboard/products"
-                            active={pathname === '/dashboard/products'}
+                            active={pathname === '/dashboard/products' || pathname === '/dashboard/menu' || pathname === '/dashboard/formulas'}
                         />
                         <SidebarLink
                             icon={<Briefcase size={20} />}
-                            label="Bahan Baku"
+                            label="Inventory / Stok"
                             href="/dashboard/ingredients"
-                            active={pathname === '/dashboard/ingredients'}
+                            active={pathname === '/dashboard/ingredients' || pathname === '/dashboard/suppliers'}
                         />
                         {role === 'OWNER' && (
-                            <>
-                                <SidebarLink
-                                    icon={<Users size={20} />}
-                                    label="Pelanggan"
-                                    href="/dashboard/customers"
-                                    active={pathname === '/dashboard/customers'}
-                                />
-                                <SidebarLink
-                                    icon={<Briefcase size={20} />}
-                                    label="Pemasok"
-                                    href="/dashboard/suppliers"
-                                    active={pathname === '/dashboard/suppliers'}
-                                />
-                            </>
+                            <SidebarLink
+                                icon={<Users size={20} />}
+                                label="Pelanggan & Staff"
+                                href="/dashboard/customers"
+                                active={pathname === '/dashboard/customers' || pathname === '/dashboard/staff'}
+                            />
                         )}
                     </>
                 )}
 
-                {/* Management - Owner & Admin */}
-                {(role === 'OWNER' || role === 'ADMIN') && (
+                {/* Management - Admin Only */}
+                {role === 'ADMIN' && (
                     <SidebarLink
                         icon={<Users size={20} />}
-                        label="Manajemen Owner"
-                        href={role === 'ADMIN' ? "/dashboard/admin/users" : "/dashboard/staff"}
-                        active={pathname === (role === 'ADMIN' ? "/dashboard/admin/users" : "/dashboard/staff")}
+                        label="Manajemen User"
+                        href="/dashboard/admin/users"
+                        active={pathname === "/dashboard/admin/users"}
                     />
                 )}
             </nav>

@@ -6,7 +6,7 @@ export class TransactionService {
      * Menangani pemotongan stok bahan baku (untuk produk formula)
      * atau pemotongan stok produk langsung.
      */
-    static async createTransaction(storeId: string, cashierName: string, items: { productId: string, quantity: number }[]) {
+    static async createTransaction(storeId: string, cashierName: string, items: { productId: string, quantity: number, isOwnBottle?: boolean, bottleId?: string }[]) {
         return await prisma.$transaction(async (tx) => {
             let totalAmount = 0;
             const transactionItems = [];
@@ -23,27 +23,43 @@ export class TransactionService {
                 const subtotal = Number(product.price) * item.quantity;
                 totalAmount += subtotal;
 
-                // 2. Jika produk berbasis formula (racikan), potong stok bahan baku
+                // 2. Jika produk berbasis formula (racikan), potong stok bahan
                 if (product.isFormula && product.formula) {
                     for (const formulaItem of product.formula.items) {
                         const neededQty = formulaItem.quantity * item.quantity;
 
-                        // Atomic update untuk menghindari race condition
-                        const updateCount = await tx.ingredient.updateMany({
-                            where: {
-                                id: formulaItem.ingredientId,
-                                storeId,
-                                stock: { gte: neededQty }
-                            },
-                            data: { stock: { decrement: neededQty } }
-                        });
+                        if (formulaItem.ingredientId) {
+                            // Potong stok Bahan Baku
+                            const updateCount = await tx.ingredient.updateMany({
+                                where: {
+                                    id: formulaItem.ingredientId,
+                                    storeId,
+                                    stock: { gte: neededQty }
+                                },
+                                data: { stock: { decrement: neededQty } }
+                            });
 
-                        if (updateCount.count === 0) {
-                            throw new Error(`Stok bahan baku '${formulaItem.ingredientId}' tidak mencukupi untuk racikan ${product.name}.`);
+                            if (updateCount.count === 0) {
+                                throw new Error(`Stok bahan baku '${formulaItem.ingredientId}' tidak mencukupi.`);
+                            }
+                        } else if (formulaItem.productId) {
+                            // Potong stok Produk Lain (Unified ML logic)
+                            const updateCount = await tx.product.updateMany({
+                                where: {
+                                    id: formulaItem.productId,
+                                    storeId,
+                                    stock: { gte: neededQty }
+                                },
+                                data: { stock: { decrement: neededQty } }
+                            });
+
+                            if (updateCount.count === 0) {
+                                throw new Error(`Stok produk dasar '${formulaItem.productId}' tidak mencukupi.`);
+                            }
                         }
                     }
                 } else {
-                    // 3. Jika produk reguler, potong stok produk langsung
+                    // 3. Jika produk reguler (bukan racikan), potong stok produk langsung
                     const updateCount = await tx.product.updateMany({
                         where: {
                             id: item.productId,
@@ -58,15 +74,34 @@ export class TransactionService {
                     }
                 }
 
+                // 4. Manajemen Botol (Jika bukan bawa sendiri dan botol ditentukan)
+                if (!item.isOwnBottle && item.bottleId) {
+                    const updateCount = await tx.ingredient.updateMany({
+                        where: {
+                            id: item.bottleId,
+                            type: 'BOTOL',
+                            storeId,
+                            stock: { gte: item.quantity }
+                        },
+                        data: { stock: { decrement: item.quantity } }
+                    });
+
+                    if (updateCount.count === 0) {
+                        throw new Error(`Stok botol tidak mencukupi.`);
+                    }
+                }
+
                 transactionItems.push({
                     productId: product.id,
                     quantity: item.quantity,
                     price: product.price,
-                    subtotal
+                    subtotal,
+                    isOwnBottle: !!item.isOwnBottle,
+                    bottleId: item.bottleId || null
                 });
             }
 
-            // 4. Simpan record transaksi final
+            // 5. Simpan record transaksi final
             return await tx.transaction.create({
                 data: {
                     invoiceNumber: `ARX-${Date.now()}-${Math.floor(Math.random() * 1000)}`,

@@ -10,8 +10,8 @@ import {
     Package,
     History,
     User,
-    PlusCircle,
-    Users
+    Users,
+    Briefcase
 } from 'lucide-react';
 
 export default function MobileNavigation() {
@@ -21,9 +21,9 @@ export default function MobileNavigation() {
 
     const ownerItems = [
         { label: 'Home', icon: LayoutDashboard, href: '/dashboard' },
-        { label: 'Transaksi', icon: ShoppingCart, href: '/dashboard/pos' },
-        { label: 'Stok', icon: Package, href: '/dashboard/ingredients' },
-        { label: 'Riwayat', icon: History, href: '/dashboard/transactions' },
+        { label: 'Kasir', icon: ShoppingCart, href: '/dashboard/pos' },
+        { label: 'Produk', icon: Package, href: '/dashboard/products' },
+        { label: 'Stok', icon: Briefcase, href: '/dashboard/ingredients' },
         { label: 'Profil', icon: User, href: '/dashboard/profile' },
     ];
 

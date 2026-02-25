@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Droplet, Edit2, Trash2, X, Check, AlertCircle } from 'lucide-react';
+import { Plus, Search, Droplets, Trash2, Edit2, AlertCircle, X, Briefcase } from 'lucide-react';
 
 export default function IngredientsPage() {
     const [ingredients, setIngredients] = useState<any[]>([]);
@@ -11,7 +11,8 @@ export default function IngredientsPage() {
     const [selectedIngredient, setSelectedIngredient] = useState<any>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [formData, setFormData] = useState({ name: '', unit: 'ml', stock: '0' });
+    const [formData, setFormData] = useState({ name: '', unit: 'ml', stock: '0', type: 'BIANG' });
+    const [activeTab, setActiveTab] = useState('BIANG');
 
     useEffect(() => {
         fetchIngredients();
@@ -25,13 +26,13 @@ export default function IngredientsPage() {
 
     const handleOpenAdd = () => {
         setSelectedIngredient(null);
-        setFormData({ name: '', unit: 'ml', stock: '0' });
+        setFormData({ name: '', unit: activeTab === 'BOTOL' ? 'pcs' : 'ml', stock: '0', type: activeTab });
         setIsModalOpen(true);
     };
 
     const handleOpenEdit = (item: any) => {
         setSelectedIngredient(item);
-        setFormData({ name: item.name, unit: item.unit, stock: item.stock.toString() });
+        setFormData({ name: item.name, unit: item.unit, stock: item.stock.toString(), type: item.type });
         setIsModalOpen(true);
     };
 
@@ -76,29 +77,58 @@ export default function IngredientsPage() {
     };
 
     return (
-        <div className="p-6 md:p-10">
-            <header className="flex justify-between items-end mb-10">
-                <div>
-                    <h1 className="text-3xl font-bold premium-gradient-text">Bahan Baku</h1>
-                    <p className="text-gray-400 mt-1">Kelola persediaan biang parfum, alkohol, dan pelarut.</p>
+        <div className="p-4 sm:p-6 md:p-10 pb-28 md:pb-10">
+            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4">
+                <div className="max-w-full">
+                    <h1 className="text-3xl font-bold premium-gradient-text">Inventory / Stok</h1>
+                    <p className="text-gray-400 mt-1 break-words">Kelola persediaan biang parfum dan hubungkan dengan pemasok.</p>
                 </div>
-                <button
-                    onClick={handleOpenAdd}
-                    className="bg-foreground text-background px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:bg-accent-gold transition-all"
-                >
-                    <Plus size={20} />
-                    Tambah Bahan
-                </button>
+                <div className="flex flex-wrap gap-3">
+                    <button
+                        onClick={() => window.location.href = '/dashboard/suppliers'}
+                        className="bg-surface border border-border px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:border-accent-gold/50 transition-all text-sm"
+                    >
+                        <Briefcase size={18} />
+                        Daftar Pemasok
+                    </button>
+                    <button
+                        onClick={handleOpenAdd}
+                        className="bg-foreground text-background px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:bg-accent-gold transition-all text-sm"
+                    >
+                        <Plus size={20} />
+                        Tambah Bahan
+                    </button>
+                </div>
             </header>
 
-            {/* Filter & Search */}
-            <div className="mb-8 flex gap-4">
+            {/* Tabs & Search */}
+            <div className="flex flex-col md:flex-row gap-6 mb-8">
+                <div className="flex bg-surface p-1 rounded-2xl border border-border">
+                    {[
+                        { id: 'BIANG', label: 'Biang Parfum' },
+                        { id: 'ALCOHOL', label: 'Alkohol' },
+                        { id: 'BOTOL', label: 'Stok Botol' },
+                        { id: 'LAINNYA', label: 'Lain-lain' },
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === tab.id
+                                    ? 'bg-foreground text-background shadow-lg'
+                                    : 'text-gray-500 hover:text-white'
+                                }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
                 <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                     <input
                         type="text"
-                        placeholder="Cari bahan baku..."
-                        className="w-full bg-surface border border-border rounded-xl py-2.5 pl-12 pr-4 outline-none focus:border-accent-gold transition-all"
+                        placeholder={`Cari di ${activeTab === 'BIANG' ? 'Biang' : activeTab}...`}
+                        className="w-full bg-surface border border-border rounded-xl py-2.5 pl-12 pr-4 outline-none focus:border-accent-gold transition-all text-sm"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
@@ -118,40 +148,42 @@ export default function IngredientsPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {ingredients.filter(i => i.name.toLowerCase().includes(search.toLowerCase())).map((item) => (
-                                <tr key={item.id} className="hover:bg-surface/30 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-background rounded-lg border border-border">
-                                                <Droplet size={16} className="text-accent-gold" />
+                            {ingredients
+                                .filter(i => (i.type === activeTab) && i.name.toLowerCase().includes(search.toLowerCase()))
+                                .map((item) => (
+                                    <tr key={item.id} className="hover:bg-surface/30 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-background rounded-lg border border-border">
+                                                    <Droplets className="text-accent-gold" />
+                                                </div>
+                                                <span className="font-medium">{item.name}</span>
                                             </div>
-                                            <span className="font-medium">{item.name}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`font-bold ${item.stock < 100 ? 'text-red-400' : 'text-accent-emerald'}`}>
-                                            {item.stock}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-gray-400">{item.unit}</td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <button
-                                                onClick={() => handleOpenEdit(item)}
-                                                className="p-2 text-gray-400 hover:text-accent-gold transition-colors"
-                                            >
-                                                <Edit2 size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleOpenDelete(item)}
-                                                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`font-bold ${item.stock < 100 ? 'text-red-400' : 'text-accent-emerald'}`}>
+                                                {item.stock}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-400">{item.unit}</td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleOpenEdit(item)}
+                                                    className="p-2 text-gray-400 hover:text-accent-gold transition-colors"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleOpenDelete(item)}
+                                                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
                             {ingredients.length === 0 && (
                                 <tr>
                                     <td colSpan={4} className="px-6 py-10 text-center text-gray-500">
@@ -184,6 +216,19 @@ export default function IngredientsPage() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
+                                    <label className="block text-sm text-gray-400 mb-1">Kategori</label>
+                                    <select
+                                        className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-accent-gold"
+                                        value={formData.type}
+                                        onChange={e => setFormData({ ...formData, type: e.target.value })}
+                                    >
+                                        <option value="BIANG">Biang Parfum</option>
+                                        <option value="ALCOHOL">Alkohol / Campuran</option>
+                                        <option value="BOTOL">Botol</option>
+                                        <option value="LAINNYA">Lain-lain</option>
+                                    </select>
+                                </div>
+                                <div>
                                     <label className="block text-sm text-gray-400 mb-1">Satuan</label>
                                     <select
                                         className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-accent-gold"
@@ -191,14 +236,16 @@ export default function IngredientsPage() {
                                         onChange={e => setFormData({ ...formData, unit: e.target.value })}
                                     >
                                         <option value="ml">ml</option>
+                                        <option value="pcs">pcs</option>
                                         <option value="gr">gr</option>
                                         <option value="drop">drop</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm text-gray-400 mb-1">Stok</label>
+                                    <label className="block text-sm text-gray-400 mb-1">Stok Saat Ini</label>
                                     <input
                                         type="number"
+                                        step="0.01"
                                         required
                                         className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-accent-gold"
                                         value={formData.stock}

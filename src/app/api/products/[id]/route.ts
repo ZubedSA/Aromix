@@ -36,7 +36,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                 data: {
                     name,
                     price: parseFloat(price),
-                    stock: parseInt(stock),
+                    stock: parseFloat(stock),
                     isFormula
                 }
             });
@@ -51,7 +51,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                         storeId,
                         items: {
                             create: formulaItems.map((fi: any) => ({
-                                ingredientId: fi.ingredientId,
+                                ingredientId: fi.ingredientId || null,
+                                productId: fi.productId || null,
                                 quantity: parseFloat(fi.quantity)
                             }))
                         }

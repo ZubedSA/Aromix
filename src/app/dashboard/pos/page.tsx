@@ -14,13 +14,21 @@ import {
 // Product logic
 export default function POSPage() {
     const [products, setProducts] = useState<any[]>([]);
+    const [resources, setResources] = useState<any[]>([]);
     const [cart, setCart] = useState<any[]>([]);
     const [search, setSearch] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
         fetchProducts();
+        fetchResources();
     }, []);
+
+    const fetchResources = async () => {
+        const res = await fetch('/api/ingredients');
+        const data = await res.json();
+        setResources(data);
+    };
 
     const fetchProducts = async () => {
         const res = await fetch('/api/products');
@@ -29,12 +37,14 @@ export default function POSPage() {
     };
 
     const addToCart = (product: any) => {
-        const existing = cart.find(item => item.id === product.id);
-        if (existing) {
-            setCart(cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
-        } else {
-            setCart([...cart, { ...product, quantity: 1 }]);
-        }
+        const id = `${product.id}-${Date.now()}`; // Unique ID for cart items to handle multiple versions of same product
+        setCart([...cart, {
+            ...product,
+            cartId: id,
+            quantity: 1,
+            isOwnBottle: false,
+            bottleId: resources.find(r => r.type === 'BOTOL')?.id || null
+        }]);
     };
 
     const handleCheckout = async () => {
@@ -48,7 +58,9 @@ export default function POSPage() {
                 body: JSON.stringify({
                     items: cart.map(item => ({
                         productId: item.id,
-                        quantity: item.quantity
+                        quantity: item.quantity,
+                        isOwnBottle: item.isOwnBottle,
+                        bottleId: item.bottleId
                     }))
                 })
             });
@@ -69,18 +81,12 @@ export default function POSPage() {
         }
     };
 
-    const removeFromCart = (id: string) => {
-        setCart(cart.filter(item => item.id !== id));
+    const removeFromCart = (cartId: string) => {
+        setCart(cart.filter(item => item.cartId !== cartId));
     };
 
-    const updateQuantity = (id: string, delta: number) => {
-        setCart(cart.map(item => {
-            if (item.id === id) {
-                const newQty = Math.max(1, item.quantity + delta);
-                return { ...item, quantity: newQty };
-            }
-            return item;
-        }));
+    const updateItem = (cartId: string, updates: any) => {
+        setCart(cart.map(item => item.cartId === cartId ? { ...item, ...updates } : item));
     };
 
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -90,7 +96,7 @@ export default function POSPage() {
             {/* Product Selection Area */}
             <div className="flex-1 p-6 overflow-y-auto">
                 <header className="mb-8">
-                    <h1 className="text-2xl font-bold mb-4">Kasir / POS</h1>
+                    <h1 className="text-2xl font-bold mb-4 break-words">Kasir / POS</h1>
                     <div className="relative max-w-xl">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
                         <input
@@ -114,8 +120,13 @@ export default function POSPage() {
                                 <div className="bg-background p-3 rounded-xl border border-border group-hover:border-accent-gold/50 transition-all">
                                     <Droplets className="text-accent-gold" />
                                 </div>
-                                <span className={`text-xs px-2 py-1 rounded-full ${product.stock < 10 ? 'bg-red-500/10 text-red-500' : 'bg-accent-emerald/10 text-accent-emerald'}`}>
-                                    Stok: {product.stock}
+                                <span className={`text-xs px-2 py-1 rounded-full font-bold ${product.isFormula
+                                    ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/20'
+                                    : product.stock < 10
+                                        ? 'bg-red-500/10 text-red-500'
+                                        : 'bg-accent-emerald/10 text-accent-emerald'
+                                    }`}>
+                                    {product.isFormula ? 'FORMULA RACIKAN' : `Stok: ${product.stock}`}
                                 </span>
                             </div>
                             <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
@@ -145,27 +156,58 @@ export default function POSPage() {
                         </div>
                     ) : (
                         cart.map(item => (
-                            <div key={item.id} className="bg-surface rounded-xl p-4 border border-border">
-                                <div className="flex justify-between mb-2">
-                                    <span className="font-medium text-sm">{item.name}</span>
-                                    <button onClick={() => removeFromCart(item.id)} className="text-gray-500 hover:text-red-500">
+                            <div key={item.cartId} className="bg-surface rounded-xl p-4 border border-border space-y-3">
+                                <div className="flex justify-between">
+                                    <span className="font-bold text-sm">{item.name}</span>
+                                    <button onClick={() => removeFromCart(item.cartId)} className="text-gray-500 hover:text-red-500">
                                         <Trash2 size={16} />
                                     </button>
                                 </div>
-                                <div className="flex justify-between items-center">
-                                    <div className="flex items-center gap-3 bg-background rounded-lg border border-border p-1">
-                                        <button onClick={() => updateQuantity(item.id, -1)} className="p-1 hover:text-accent-gold"><Minus size={14} /></button>
-                                        <span className="text-sm w-4 text-center">{item.quantity}</span>
-                                        <button onClick={() => updateQuantity(item.id, 1)} className="p-1 hover:text-accent-gold"><Plus size={14} /></button>
+                                <div className="flex justify-between items-center bg-background rounded-lg border border-border p-2">
+                                    <span className="text-xs text-gray-500">Jumlah (ml/pcs)</span>
+                                    <div className="flex items-center gap-3">
+                                        <button onClick={() => updateItem(item.cartId, { quantity: Math.max(0, item.quantity - 1) })} className="p-1 hover:text-accent-gold"><Minus size={14} /></button>
+                                        <input
+                                            type="number"
+                                            className="bg-transparent w-12 text-center text-sm outline-none"
+                                            value={item.quantity}
+                                            onChange={(e) => updateItem(item.cartId, { quantity: parseFloat(e.target.value) || 0 })}
+                                        />
+                                        <button onClick={() => updateItem(item.cartId, { quantity: item.quantity + 1 })} className="p-1 hover:text-accent-gold"><Plus size={14} /></button>
                                     </div>
-                                    <span className="font-bold text-sm">Rp {(item.price * item.quantity).toLocaleString('id-ID')}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={item.isOwnBottle}
+                                            onChange={(e) => updateItem(item.cartId, { isOwnBottle: e.target.checked })}
+                                            className="w-4 h-4 rounded border-border bg-background text-accent-gold focus:ring-accent-gold"
+                                        />
+                                        <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Bawa Botol Sendiri</span>
+                                    </label>
+                                    {!item.isOwnBottle && (
+                                        <select
+                                            className="bg-background border border-border rounded text-[10px] px-2 py-1 outline-none font-bold"
+                                            value={item.bottleId || ''}
+                                            onChange={(e) => updateItem(item.cartId, { bottleId: e.target.value })}
+                                        >
+                                            <option value="">Pilih Botol...</option>
+                                            {resources.filter(r => r.type === 'BOTOL').map(r => (
+                                                <option key={r.id} value={r.id}>{r.name}</option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
+                                <div className="flex justify-end pt-1">
+                                    <span className="font-bold text-sm text-accent-gold">Rp {(item.price * item.quantity).toLocaleString('id-ID')}</span>
                                 </div>
                             </div>
                         ))
                     )}
                 </div>
 
-                <div className="p-6 bg-surface border-t border-border">
+                <div className="p-6 pb-28 md:pb-6 bg-surface border-t border-border">
                     <div className="flex justify-between mb-4">
                         <span className="text-gray-400">Total Harga</span>
                         <span className="text-2xl font-bold text-accent-gold">Rp {total.toLocaleString('id-ID')}</span>

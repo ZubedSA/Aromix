@@ -20,7 +20,8 @@ import {
     Search,
     History,
     FileText,
-    FlaskConical
+    FlaskConical,
+    ShoppingBag
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -58,11 +59,11 @@ export default function DashboardPage() {
     );
 
     return (
-        <div className="min-h-screen bg-background pb-24 md:pb-10">
+        <div className="min-h-screen bg-background pb-28 md:pb-10">
             {/* --- MOBILE VIEW --- */}
             <div className="md:hidden block">
                 <header className="px-6 pt-10 pb-20 bg-gradient-to-b from-accent-gold/10 to-transparent flex justify-between items-center">
-                    <h1 className="text-2xl font-black italic premium-gradient-text tracking-tighter uppercase whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">
+                    <h1 className="text-2xl font-black italic premium-gradient-text tracking-tighter uppercase break-words overflow-hidden text-ellipsis max-w-[180px]">
                         {session?.user?.storeName || 'AROMIX'}
                     </h1>
                     <div className="flex gap-4">
@@ -145,13 +146,13 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Quick Tools Grid */}
-                    <div className="grid grid-cols-3 gap-2 py-4">
-                        <ToolItem icon={History} label="Riwayat" href="/dashboard/transactions" />
-                        <ToolItem icon={FileText} label="Laporan" href="/dashboard/reports" />
-                        <ToolItem icon={Users} label="Costumer" href="/dashboard/customers" />
-                        <ToolItem icon={FlaskConical} label="Formula" href="/dashboard/formulas" />
-                        <ToolItem icon={Package} label="Produk" href="/dashboard/inventory" />
-                        <ToolItem icon={Settings} label="Preset" href="/dashboard/settings" />
+                    <div className="grid grid-cols-2 gap-3 py-4">
+                        <ToolItem icon={ShoppingCart} label="Kasir / POS" href="/dashboard/pos" />
+                        <ToolItem icon={History} label="Riwayat & Laporan" href="/dashboard/transactions" />
+                        <ToolItem icon={Package} label="Produk & Katalog" href="/dashboard/products" />
+                        <ToolItem icon={Droplets} label="Inventory / Stok" href="/dashboard/ingredients" />
+                        <ToolItem icon={Users} label="Pelanggan & Staff" href="/dashboard/customers" />
+                        <ToolItem icon={Settings} label="Pengaturan" href="/dashboard/settings" />
                     </div>
                 </div>
             </div>
@@ -172,6 +173,18 @@ export default function DashboardPage() {
                         </button>
                     </div>
                 </header>
+
+                {/* Quick Tools for Desktop */}
+                <div className="mb-12">
+                    <SectionHeader title="Aksi Cepat" />
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                        <ToolItem icon={ShoppingCart} label="Kasir / POS" href="/dashboard/pos" />
+                        <ToolItem icon={History} label="Riwayat & Laporan" href="/dashboard/transactions" />
+                        <ToolItem icon={Package} label="Produk & Katalog" href="/dashboard/products" />
+                        <ToolItem icon={Droplets} label="Inventory / Stok" href="/dashboard/ingredients" />
+                        <ToolItem icon={Users} label="Pelanggan & Staff" href="/dashboard/customers" />
+                    </div>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                     <StatCard
@@ -230,7 +243,7 @@ export default function DashboardPage() {
 
 function CircularStat({ value, label, color }: { value: any, label: string, color: string }) {
     return (
-        <div className="glass-panel p-4 rounded-[2rem] flex flex-col items-center gap-2">
+        <div className="glass-panel p-2 sm:p-4 rounded-[2rem] flex flex-col items-center gap-2">
             <div className={`w-16 h-16 rounded-full border-4 ${color} flex items-center justify-center`}>
                 <span className="text-sm font-black">{value}</span>
             </div>
@@ -241,11 +254,22 @@ function CircularStat({ value, label, color }: { value: any, label: string, colo
 
 function ToolItem({ icon: Icon, label, href }: { icon: any, label: string, href: string }) {
     return (
-        <Link href={href} className="flex flex-col items-center gap-2 p-4 bg-surface/30 rounded-[2rem] border border-border/50 hover:bg-accent-gold/10 hover:border-accent-gold/20 transition-all group">
+        <Link href={href} className="flex flex-col items-center gap-2 p-3 sm:p-4 bg-surface/30 rounded-[2rem] border border-border/50 hover:bg-accent-gold/10 hover:border-accent-gold/20 transition-all group">
             <div className="w-12 h-12 bg-background rounded-2xl flex items-center justify-center border border-border group-hover:border-accent-gold/50 transition-all">
                 <Icon size={20} className="text-gray-500 group-hover:text-accent-gold" />
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-white">{label}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-white text-center">{label}</span>
+        </Link>
+    );
+}
+
+function SidebarLinkForDashboard({ icon: Icon, label, href }: { icon: any, label: string, href: string }) {
+    return (
+        <Link href={href} className="flex flex-col items-center gap-2 p-3 sm:p-4 bg-surface/30 rounded-[2rem] border border-border/50 hover:bg-accent-gold/10 hover:border-accent-gold/20 transition-all group">
+            <div className="w-12 h-12 bg-background rounded-2xl flex items-center justify-center border border-border group-hover:border-accent-gold/50 transition-all">
+                <Icon size={20} className="text-gray-500 group-hover:text-accent-gold" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-white text-center">{label}</span>
         </Link>
     );
 }

@@ -26,11 +26,11 @@ export default function ReportsPage() {
     if (loading) return <div className="p-10 text-gray-400">Menganalisis data...</div>;
 
     return (
-        <div className="p-6 md:p-10">
-            <header className="flex justify-between items-end mb-10">
-                <div>
+        <div className="p-4 sm:p-6 md:p-10 pb-28 md:pb-10">
+            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4">
+                <div className="max-w-full">
                     <h1 className="text-3xl font-bold premium-gradient-text">Laporan Analitik</h1>
-                    <p className="text-gray-400 mt-1">Pantau performa penjualan dan produk terlaris Anda.</p>
+                    <p className="text-gray-400 mt-1 break-words">Pantau performa penjualan dan produk terlaris Anda.</p>
                 </div>
                 <button
                     className="bg-surface border border-border px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:border-accent-gold/50 transition-all"

@@ -68,11 +68,11 @@ export default function StaffPage() {
     };
 
     return (
-        <div className="p-6 md:p-10">
-            <header className="flex justify-between items-end mb-10">
-                <div>
-                    <h1 className="text-3xl font-bold premium-gradient-text">Kelola Kasir</h1>
-                    <p className="text-gray-400 mt-1">Manajemen akun kasir untuk toko Anda.</p>
+        <div className="p-4 sm:p-6 md:p-10 pb-28 md:pb-10">
+            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4">
+                <div className="max-w-full">
+                    <h1 className="text-3xl font-bold premium-gradient-text tracking-tighter">Kelola Kasir</h1>
+                    <p className="text-gray-400 mt-1 break-words">Manajemen akun kasir untuk toko Anda.</p>
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}
