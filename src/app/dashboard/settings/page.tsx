@@ -24,6 +24,10 @@ export default function SettingsPage() {
     const [userProfile, setUserProfile] = useState({ name: '', email: '' });
     const [storeProfile, setStoreProfile] = useState({ name: '', address: '', phone: '' });
 
+    // Password change states
+    const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
+    const [isChangingPass, setIsChangingPass] = useState(false);
+
     useEffect(() => {
         fetchSettings();
     }, []);
@@ -79,6 +83,41 @@ export default function SettingsPage() {
             setMessage({ type: 'error', text: 'Gagal memperbarui informasi toko.' });
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (passwords.new !== passwords.confirm) {
+            setMessage({ type: 'error', text: 'Konfirmasi password baru tidak cocok!' });
+            return;
+        }
+
+        setIsChangingPass(true);
+        setMessage({ type: '', text: '' });
+
+        try {
+            const res = await fetch('/api/profile/password', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    currentPassword: passwords.current,
+                    newPassword: passwords.new
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setMessage({ type: 'success', text: 'Password Anda berhasil diperbarui!' });
+                setPasswords({ current: '', new: '', confirm: '' });
+            } else {
+                setMessage({ type: 'error', text: data.error || 'Gagal mengubah password.' });
+            }
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Terjadi kesalahan sistem.' });
+        } finally {
+            setIsChangingPass(false);
         }
     };
 
@@ -199,11 +238,58 @@ export default function SettingsPage() {
                             </form>
                         )}
 
-                        {(activeTab === 'notifications' || activeTab === 'security') && (
+                        {activeTab === 'security' && (
+                            <form onSubmit={handleChangePassword} className="space-y-6">
+                                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                                    <Lock className="text-accent-gold" size={20} />
+                                    Keamanan Akun
+                                </h3>
+                                <div className="p-4 bg-accent-gold/5 border border-accent-gold/20 rounded-2xl flex items-start gap-3 mb-6">
+                                    <Shield className="text-accent-gold shrink-0 mt-0.5" size={20} />
+                                    <p className="text-xs text-gray-400 leading-relaxed">
+                                        Gunakan password yang kuat untuk melindungi akun Anda. Hindari menggunakan kata sandi yang mudah ditebak atau digunakan di layanan lain.
+                                    </p>
+                                </div>
+                                <div className="space-y-4">
+                                    <FormInput
+                                        label="Password Saat Ini"
+                                        type="password"
+                                        value={passwords.current}
+                                        onChange={v => setPasswords({ ...passwords, current: v })}
+                                        required
+                                    />
+                                    <hr className="border-border opacity-50 my-2" />
+                                    <FormInput
+                                        label="Password Baru"
+                                        type="password"
+                                        value={passwords.new}
+                                        onChange={v => setPasswords({ ...passwords, new: v })}
+                                        required
+                                    />
+                                    <FormInput
+                                        label="Konfirmasi Password Baru"
+                                        type="password"
+                                        value={passwords.confirm}
+                                        onChange={v => setPasswords({ ...passwords, confirm: v })}
+                                        required
+                                    />
+                                </div>
+                                <button
+                                    disabled={isChangingPass}
+                                    type="submit"
+                                    className="mt-8 bg-foreground text-background px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-accent-gold transition-all disabled:opacity-50"
+                                >
+                                    <Lock size={18} />
+                                    {isChangingPass ? 'Memproses...' : 'Ubah Password'}
+                                </button>
+                            </form>
+                        )}
+
+                        {activeTab === 'notifications' && (
                             <div className="h-40 flex flex-col items-center justify-center text-center">
-                                <Info className="text-gray-600 mb-3" size={32} />
+                                <Bell className="text-gray-600 mb-3" size={32} />
                                 <h4 className="font-bold text-gray-500">Fitur Segera Hadir</h4>
-                                <p className="text-sm text-gray-600 mt-1">Kami sedang menyiapkan modul keamanan dan notifikasi untuk Anda.</p>
+                                <p className="text-sm text-gray-600 mt-1">Kami sedang menyiapkan modul notifikasi untuk Anda.</p>
                             </div>
                         )}
                     </div>
@@ -238,15 +324,17 @@ interface FormInputProps {
     value: string;
     onChange: (v: string) => void;
     disabled?: boolean;
+    required?: boolean;
 }
 
-function FormInput({ label, type = "text", value, onChange, disabled = false }: FormInputProps) {
+function FormInput({ label, type = "text", value, onChange, disabled = false, required = false }: FormInputProps) {
     return (
         <div>
             <label className="block text-sm text-gray-400 mb-1.5">{label}</label>
             <input
                 type={type}
                 disabled={disabled}
+                required={required}
                 className={`w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-accent-gold transition-all text-sm ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                 value={value}
                 onChange={e => onChange(e.target.value)}

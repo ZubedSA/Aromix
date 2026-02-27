@@ -1,38 +1,52 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Droplets, Trash2, Edit2, AlertCircle, X, Briefcase } from 'lucide-react';
+import { Plus, Search, Droplets, Trash2, Edit2, AlertCircle, X, Briefcase, Package } from 'lucide-react';
 
 export default function IngredientsPage() {
     const [ingredients, setIngredients] = useState<any[]>([]);
+    const [products, setProducts] = useState<any[]>([]);
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedIngredient, setSelectedIngredient] = useState<any>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [formData, setFormData] = useState({ name: '', unit: 'ml', stock: '0', type: 'BIANG' });
+    const [formData, setFormData] = useState({ name: '', unit: 'ml', stock: '0', type: 'BIANG', price: '0' });
     const [activeTab, setActiveTab] = useState('BIANG');
 
     useEffect(() => {
-        fetchIngredients();
+        fetchData();
     }, []);
 
-    const fetchIngredients = async () => {
-        const res = await fetch('/api/ingredients');
-        const data = await res.json();
-        setIngredients(data);
+    const fetchData = async () => {
+        const [ingRes, prodRes] = await Promise.all([
+            fetch('/api/ingredients'),
+            fetch('/api/products')
+        ]);
+        const ingData = await ingRes.json();
+        const prodData = await prodRes.json();
+        setIngredients(ingData);
+        setProducts(prodData.filter((p: any) => p.isFormula));
     };
+
+    const fetchIngredients = fetchData; // Alias for backward compatibility if needed internally
 
     const handleOpenAdd = () => {
         setSelectedIngredient(null);
-        setFormData({ name: '', unit: activeTab === 'BOTOL' ? 'pcs' : 'ml', stock: '0', type: activeTab });
+        setFormData({ name: '', unit: activeTab === 'BOTOL' ? 'pcs' : 'ml', stock: '0', type: activeTab, price: '0' });
         setIsModalOpen(true);
     };
 
-    const handleOpenEdit = (item: any) => {
-        setSelectedIngredient(item);
-        setFormData({ name: item.name, unit: item.unit, stock: item.stock.toString(), type: item.type });
+    const handleOpenEdit = (ingredient: any) => {
+        setSelectedIngredient(ingredient);
+        setFormData({
+            name: ingredient.name,
+            unit: ingredient.unit,
+            stock: ingredient.stock.toString(),
+            type: ingredient.type,
+            price: ingredient.price?.toString() || '0'
+        });
         setIsModalOpen(true);
     };
 
@@ -108,14 +122,15 @@ export default function IngredientsPage() {
                         { id: 'BIANG', label: 'Biang Parfum' },
                         { id: 'ALCOHOL', label: 'Alkohol' },
                         { id: 'BOTOL', label: 'Stok Botol' },
+                        { id: 'FORMULA_PRODUCT', label: 'Produk Racikan' },
                         { id: 'LAINNYA', label: 'Lain-lain' },
                     ].map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === tab.id
-                                    ? 'bg-foreground text-background shadow-lg'
-                                    : 'text-gray-500 hover:text-white'
+                                ? 'bg-foreground text-background shadow-lg'
+                                : 'text-gray-500 hover:text-white'
                                 }`}
                         >
                             {tab.label}
@@ -142,51 +157,90 @@ export default function IngredientsPage() {
                         <thead className="bg-background/50 text-gray-400 text-sm border-b border-border">
                             <tr>
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider">Nama Bahan</th>
-                                <th className="px-6 py-4 font-medium uppercase tracking-wider">Stok Saat Ini</th>
+                                <th className="px-6 py-4 font-medium uppercase tracking-wider">Stok</th>
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider">Satuan</th>
+                                <th className="px-6 py-4 font-medium uppercase tracking-wider">Harga Jual</th>
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {ingredients
-                                .filter(i => (i.type === activeTab) && i.name.toLowerCase().includes(search.toLowerCase()))
-                                .map((item) => (
-                                    <tr key={item.id} className="hover:bg-surface/30 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-background rounded-lg border border-border">
-                                                    <Droplets className="text-accent-gold" />
+                            {activeTab === 'FORMULA_PRODUCT' ? (
+                                products
+                                    .filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+                                    .map((item) => (
+                                        <tr key={item.id} className="hover:bg-surface/30 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-background rounded-lg border border-border">
+                                                        <Package className="text-accent-gold" size={20} />
+                                                    </div>
+                                                    <span className="font-medium">{item.name}</span>
                                                 </div>
-                                                <span className="font-medium">{item.name}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`font-bold ${item.stock < 100 ? 'text-red-400' : 'text-accent-emerald'}`}>
-                                                {item.stock}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-400">{item.unit}</td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleOpenEdit(item)}
-                                                    className="p-2 text-gray-400 hover:text-accent-gold transition-colors"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleOpenDelete(item)}
-                                                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`font-bold ${item.stock < 10 ? 'text-red-400' : 'text-accent-emerald'}`}>
+                                                    {item.stock}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-400">ml</td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-accent-gold font-bold">
+                                                    Rp {parseFloat(item.price || 0).toLocaleString('id-ID')}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-2 text-xs text-gray-500 italic">
+                                                    Kelola di menu Produk
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                            ) : (
+                                ingredients
+                                    .filter(i => (i.type === activeTab) && i.name.toLowerCase().includes(search.toLowerCase()))
+                                    .map((item) => (
+                                        <tr key={item.id} className="hover:bg-surface/30 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-background rounded-lg border border-border">
+                                                        <Droplets className="text-accent-gold" />
+                                                    </div>
+                                                    <span className="font-medium">{item.name}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`font-bold ${item.stock < 100 ? 'text-red-400' : 'text-accent-emerald'}`}>
+                                                    {item.stock}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-400">{item.unit}</td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-accent-gold font-bold">
+                                                    Rp {parseFloat(item.price || 0).toLocaleString('id-ID')}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleOpenEdit(item)}
+                                                        className="p-2 text-gray-400 hover:text-accent-gold transition-colors"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleOpenDelete(item)}
+                                                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                            )}
                             {ingredients.length === 0 && (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-10 text-center text-gray-500">
+                                    <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
                                         Belum ada bahan baku.
                                     </td>
                                 </tr>
@@ -250,6 +304,16 @@ export default function IngredientsPage() {
                                         className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-accent-gold"
                                         value={formData.stock}
                                         onChange={e => setFormData({ ...formData, stock: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-1">Harga Jual (0 jika tidak dijual)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-accent-gold"
+                                        value={formData.price}
+                                        onChange={e => setFormData({ ...formData, price: e.target.value })}
                                     />
                                 </div>
                             </div>

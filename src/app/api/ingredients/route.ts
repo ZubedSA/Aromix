@@ -21,13 +21,14 @@ export async function POST(req: Request) {
     if (!session?.user?.storeId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const storeId = session.user.storeId;
 
-    const { name, unit, stock, type } = await req.json();
+    const { name, unit, stock, type, price } = await req.json();
 
     const ingredient = await prisma.ingredient.create({
         data: {
             name,
             unit,
             stock: parseFloat(stock),
+            price: parseFloat(price) || 0,
             type: type || 'BIANG',
             storeId
         }

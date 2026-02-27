@@ -72,10 +72,12 @@ export default function ProductsPage() {
         });
     };
 
-    const updateFormulaItem = (index: number, field: string, value: string) => {
-        const newItems = [...formData.formulaItems];
-        newItems[index] = { ...newItems[index], [field]: value };
-        setFormData({ ...formData, formulaItems: newItems });
+    const updateFormulaItem = (index: number, updates: Record<string, string>) => {
+        setFormData(prev => {
+            const newItems = [...prev.formulaItems];
+            newItems[index] = { ...newItems[index], ...updates };
+            return { ...prev, formulaItems: newItems };
+        });
     };
 
     const removeFormulaItem = (index: number) => {
@@ -188,7 +190,7 @@ export default function ProductsPage() {
                         <div className="flex justify-between items-center pt-4 border-t border-border">
                             <span className="text-xs text-gray-500 uppercase tracking-wider">Komposisi</span>
                             <span className="text-xs font-bold text-gray-300">
-                                {product.isFormula ? `${product.formula?.items?.length || 0} Bahan` : `Stok: ${product.stock}`}
+                                Stok: {product.stock} {product.isFormula ? '(ml)' : ''}
                             </span>
                         </div>
 
@@ -311,14 +313,20 @@ export default function ProductsPage() {
                                                         onChange={e => {
                                                             const val = e.target.value;
                                                             if (val.startsWith('ing:')) {
-                                                                updateFormulaItem(index, 'ingredientId', val.replace('ing:', ''));
-                                                                updateFormulaItem(index, 'productId', '');
+                                                                updateFormulaItem(index, {
+                                                                    ingredientId: val.replace('ing:', ''),
+                                                                    productId: ''
+                                                                });
                                                             } else if (val.startsWith('prod:')) {
-                                                                updateFormulaItem(index, 'productId', val.replace('prod:', ''));
-                                                                updateFormulaItem(index, 'ingredientId', '');
+                                                                updateFormulaItem(index, {
+                                                                    productId: val.replace('prod:', ''),
+                                                                    ingredientId: ''
+                                                                });
                                                             } else {
-                                                                updateFormulaItem(index, 'ingredientId', '');
-                                                                updateFormulaItem(index, 'productId', '');
+                                                                updateFormulaItem(index, {
+                                                                    ingredientId: '',
+                                                                    productId: ''
+                                                                });
                                                             }
                                                         }}
                                                     >
@@ -343,7 +351,7 @@ export default function ProductsPage() {
                                                         step="0.01"
                                                         className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-accent-gold"
                                                         value={fi.quantity}
-                                                        onChange={e => updateFormulaItem(index, 'quantity', e.target.value)}
+                                                        onChange={e => updateFormulaItem(index, { quantity: e.target.value })}
                                                     />
                                                 </div>
                                                 <button

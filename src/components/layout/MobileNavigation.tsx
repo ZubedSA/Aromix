@@ -11,7 +11,8 @@ import {
     History,
     User,
     Users,
-    Briefcase
+    Briefcase,
+    Database
 } from 'lucide-react';
 
 export default function MobileNavigation() {
@@ -30,6 +31,7 @@ export default function MobileNavigation() {
     const adminItems = [
         { label: 'Home', icon: LayoutDashboard, href: '/dashboard/admin' },
         { label: 'Users', icon: Users, href: '/dashboard/admin/users' },
+        { label: 'Backup', icon: Database, href: '/dashboard/admin/backup' },
         { label: 'Profil', icon: User, href: '/dashboard/profile' },
     ];
 

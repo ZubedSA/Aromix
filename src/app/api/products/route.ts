@@ -42,11 +42,34 @@ export async function POST(req: Request) {
 
     try {
         const product = await prisma.$transaction(async (tx) => {
+            let totalStock = parseFloat(stock);
+
+            if (isFormula && formulaItems && formulaItems.length > 0) {
+                // Calculate stock from formula items (sum of all components)
+                totalStock = formulaItems.reduce((sum: number, fi: any) => sum + parseFloat(fi.quantity), 0);
+
+                // Deduct stock from ingredients/products used in the formula
+                for (const item of formulaItems) {
+                    const qty = parseFloat(item.quantity);
+                    if (item.ingredientId) {
+                        await tx.ingredient.update({
+                            where: { id: item.ingredientId },
+                            data: { stock: { decrement: qty } }
+                        });
+                    } else if (item.productId) {
+                        await tx.product.update({
+                            where: { id: item.productId },
+                            data: { stock: { decrement: qty } }
+                        });
+                    }
+                }
+            }
+
             const newProduct = await tx.product.create({
                 data: {
                     name,
                     price: parseFloat(price),
-                    stock: parseFloat(stock),
+                    stock: totalStock,
                     isFormula,
                     storeId
                 }

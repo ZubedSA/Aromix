@@ -14,7 +14,8 @@ import {
     LayoutDashboard,
     History as HistoryIcon,
     Beaker,
-    ShoppingBag
+    ShoppingBag,
+    Database
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
@@ -104,12 +105,20 @@ export default function Sidebar() {
 
                 {/* Management - Admin Only */}
                 {role === 'ADMIN' && (
-                    <SidebarLink
-                        icon={<Users size={20} />}
-                        label="Manajemen User"
-                        href="/dashboard/admin/users"
-                        active={pathname === "/dashboard/admin/users"}
-                    />
+                    <>
+                        <SidebarLink
+                            icon={<Users size={20} />}
+                            label="Manajemen User"
+                            href="/dashboard/admin/users"
+                            active={pathname === "/dashboard/admin/users"}
+                        />
+                        <SidebarLink
+                            icon={<Database size={20} />}
+                            label="Backup & Restore"
+                            href="/dashboard/admin/backup"
+                            active={pathname === "/dashboard/admin/backup"}
+                        />
+                    </>
                 )}
             </nav>
 

@@ -11,7 +11,8 @@ import {
     Calendar,
     Search,
     ExternalLink,
-    Activity as ActivityIcon
+    Activity as ActivityIcon,
+    Database
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -124,13 +125,13 @@ export default function AdminDashboardPage() {
                                 <div className="text-[10px] text-gray-500">Monitoring GMV</div>
                             </div>
                         </Link>
-                        <Link href="/dashboard/admin/settings" className="glass-panel p-6 rounded-3xl flex flex-col items-center gap-3 hover:border-accent-gold/50 transition-all group">
+                        <Link href="/dashboard/admin/backup" className="glass-panel p-6 rounded-3xl flex flex-col items-center gap-3 hover:border-accent-gold/50 transition-all group">
                             <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center border border-purple-500/20 group-hover:bg-purple-500 group-hover:text-white transition-all">
-                                <ShieldCheck size={24} />
+                                <Database size={24} />
                             </div>
                             <div className="text-center">
-                                <div className="font-bold text-sm">Kontrol Sistem</div>
-                                <div className="text-[10px] text-gray-500">Keamanan & Log</div>
+                                <div className="font-bold text-sm">Backup & Restore</div>
+                                <div className="text-[10px] text-gray-500">Ekspor/Impor Data</div>
                             </div>
                         </Link>
                     </div>
