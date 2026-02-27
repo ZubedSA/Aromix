@@ -35,8 +35,12 @@ export async function GET(req: Request) {
         });
 
         // Resolve product names
+        const productIds = topProducts
+            .map(p => p.productId)
+            .filter((id): id is string => id !== null);
+
         const products = await prisma.product.findMany({
-            where: { id: { in: topProducts.map(p => p.productId) } },
+            where: { id: { in: productIds } },
             select: { id: true, name: true }
         });
 
