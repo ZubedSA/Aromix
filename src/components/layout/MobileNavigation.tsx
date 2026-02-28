@@ -37,6 +37,9 @@ export default function MobileNavigation() {
 
     const navItems = role === 'ADMIN' ? adminItems : ownerItems;
 
+    // Hide navigation on auth pages
+    if (pathname === '/login' || pathname === '/register') return null;
+
     return (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/90 backdrop-blur-xl border-t border-white/5 px-6 py-3 z-50 flex justify-between items-center shadow-2xl">
             {navItems.map((item) => {
