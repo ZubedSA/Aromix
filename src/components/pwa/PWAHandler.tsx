@@ -27,25 +27,34 @@ export default function PWAHandler() {
         }
     }, []);
 
-    // 2. Tangkap Event & Atur Pop-up (Hanya di halaman /login dan jika belum pernah ditutup/diinstal)
+    // 2. Tangkap Event (Sekali saja secara global)
     useEffect(() => {
         const handler = (e: any) => {
             e.preventDefault();
             setInstallPrompt(e);
-
-            const isDismissed = localStorage.getItem('aromix_pwa_dismissed') === 'true';
-            if (pathname === '/login' && !isDismissed) {
-                // Jeda 2 detik sebelum memunculkan agar terkesan organik
-                setTimeout(() => {
-                    setIsVisible(true);
-                }, 2000);
-            }
         };
 
         window.addEventListener('beforeinstallprompt', handler);
-
         return () => window.removeEventListener('beforeinstallprompt', handler);
-    }, [pathname]);
+    }, []);
+
+    // 3. Atur Visibilitas Pop-up Berdasarkan Halaman & Status Dismiss
+    useEffect(() => {
+        if (!installPrompt) return;
+
+        const isDismissed = localStorage.getItem('aromix_pwa_dismissed') === 'true';
+        const targetPages = ['/', '/login', '/register'];
+
+        if (targetPages.includes(pathname || '') && !isDismissed) {
+            // Jeda 2 detik sebelum memunculkan agar terkesan organik
+            const timer = setTimeout(() => {
+                setIsVisible(true);
+            }, 2000);
+            return () => clearTimeout(timer);
+        } else {
+            setIsVisible(false);
+        }
+    }, [pathname, installPrompt]);
 
     const handleInstall = async () => {
         if (!installPrompt) return;
@@ -65,8 +74,9 @@ export default function PWAHandler() {
         localStorage.setItem('aromix_pwa_dismissed', 'true');
     };
 
-    // Hindari perenderan jika bukan di halaman login atau belum memenuhi syarat
-    if (pathname !== '/login' || !isVisible || !installPrompt) return null;
+    // Hindari perenderan jika bukan di halaman target atau belum memenuhi syarat
+    const targetPages = ['/', '/login', '/register'];
+    if (!targetPages.includes(pathname || '') || !isVisible || !installPrompt) return null;
 
     return (
         <div className="fixed bottom-6 left-6 right-6 md:left-auto md:right-10 md:w-96 z-[100] animate-in slide-in-from-bottom-10 fade-in duration-700">

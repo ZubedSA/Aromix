@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Droplet, Mail, Lock, User, Briefcase, ChevronRight, Loader2, CheckCircle2 } from 'lucide-react';
+import { Droplet, Mail, Lock, User, Briefcase, ChevronRight, Loader2, CheckCircle2, ArrowLeft } from 'lucide-react';
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -95,7 +95,16 @@ _Pesan otomatis dikirim melalui Sistem Registrasi AROMIX_`;
     }
 
     return (
-        <div className="min-h-screen bg-background flex">
+        <div className="min-h-screen bg-background flex relative">
+            {/* Back to Landing Page Button */}
+            <Link 
+                href="/" 
+                className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2.5 bg-surface/50 backdrop-blur-md border border-border rounded-full text-xs font-bold text-gray-400 hover:text-white hover:border-accent-gold/40 transition-all z-20 shadow-lg"
+            >
+                <ArrowLeft size={14} />
+                Kembali
+            </Link>
+
             {/* Left Side - Visual */}
             <div className="hidden lg:flex w-1/2 relative overflow-hidden bg-black items-center justify-center p-20">
                 <div className="absolute inset-0 opacity-40 bg-[url('https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1978&auto=format&fit=crop')] bg-cover bg-center grayscale" />

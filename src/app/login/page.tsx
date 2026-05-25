@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Crown, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Crown, Mail, Lock, ArrowRight, Loader2, ArrowLeft } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -40,6 +40,15 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative overflow-hidden">
+            {/* Back to Landing Page Button */}
+            <Link 
+                href="/" 
+                className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2.5 bg-surface/50 backdrop-blur-md border border-border rounded-full text-xs font-bold text-gray-400 hover:text-white hover:border-accent-gold/40 transition-all z-20 shadow-lg"
+            >
+                <ArrowLeft size={14} />
+                Kembali
+            </Link>
+
             {/* Background Decor */}
             <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-accent-gold/5 blur-[100px] rounded-full" />
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent-emerald/5 blur-[100px] rounded-full" />

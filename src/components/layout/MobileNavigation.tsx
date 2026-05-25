@@ -19,6 +19,11 @@ export default function MobileNavigation() {
     const pathname = usePathname();
     const { data: session } = useSession();
     const role = session?.user?.role;
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const ownerItems = [
         { label: 'Home', icon: LayoutDashboard, href: '/dashboard' },
@@ -48,8 +53,8 @@ export default function MobileNavigation() {
             ? cashierItems 
             : ownerItems;
 
-    // Hanya tampilkan navigasi di halaman dashboard
-    if (!pathname.startsWith('/dashboard')) return null;
+    // Hanya tampilkan navigasi di halaman dashboard jika sudah terpasang (mounted) di client
+    if (!mounted || !pathname || !pathname.startsWith('/dashboard')) return null;
 
     return (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/90 backdrop-blur-xl border-t border-white/5 px-3 py-2.5 z-50 flex justify-between items-center shadow-2xl">
