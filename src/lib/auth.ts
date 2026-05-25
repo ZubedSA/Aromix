@@ -2,6 +2,8 @@ import NextAuth, { NextAuthOptions, DefaultSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import fs from 'fs';
+import path from 'path';
 
 declare module "next-auth" {
     interface Session {
@@ -47,9 +49,19 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 try {
-                    console.log('[AUTH DEBUG]: Authorizing', credentials.email);
-                    const user = await prisma.user.findUnique({
-                        where: { email: credentials.email },
+                    try {
+                        const allUsers = await prisma.user.findMany();
+                        const output = allUsers.map(u => `ID: ${u.id} | Email: "${u.email}" | Name: "${u.name}" | Role: ${u.role} | Approved: ${u.isApproved} | StoreID: ${u.storeId}`).join('\n');
+                        fs.writeFileSync(path.join(process.cwd(), 'diagnostic.txt'), output);
+                    } catch (e: any) {
+                        fs.writeFileSync(path.join(process.cwd(), 'diagnostic.txt'), 'Diag Error: ' + e.message);
+                    }
+
+                    const normalizedEmail = credentials.email.trim().toLowerCase();
+                    console.log('[AUTH DEBUG]: Authorizing', normalizedEmail);
+                    
+                    let user = await prisma.user.findUnique({
+                        where: { email: normalizedEmail },
                         include: {
                             store: {
                                 include: { subscription: true }
@@ -58,14 +70,40 @@ export const authOptions: NextAuthOptions = {
                     });
 
                     if (!user) {
+                        user = await prisma.user.findFirst({
+                            where: {
+                                email: {
+                                    equals: normalizedEmail,
+                                    mode: 'insensitive'
+                                }
+                            },
+                            include: {
+                                store: {
+                                    include: { subscription: true }
+                                }
+                            }
+                        });
+                    }
+ 
+                    if (!user) {
                         console.log('[AUTH DEBUG]: User not found');
                         throw new Error("Email atau password salah.");
                     }
-
+ 
                     const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
                     if (!isPasswordValid) {
                         console.log('[AUTH DEBUG]: Invalid password');
                         throw new Error("Email atau password salah.");
+                    }
+
+                    // Auto-approve cashier accounts created by OWNER
+                    if (user.role === 'CASHIER' && !user.isApproved) {
+                        await prisma.user.update({
+                            where: { id: user.id },
+                            data: { isApproved: true }
+                        });
+                        user.isApproved = true;
+                        console.log('[AUTH DEBUG]: Cashier auto-approved on login:', user.email);
                     }
 
                     console.log('[AUTH DEBUG]: Login success for', user.email);
@@ -94,11 +132,13 @@ export const authOptions: NextAuthOptions = {
                 token.storeName = user.storeName;
                 token.subscriptionStatus = user.subscriptionStatus;
                 token.isApproved = user.isApproved;
+                token.id = user.id;
             }
             return token;
         },
         async session({ session, token }: any) {
             if (token) {
+                session.user.id = token.id || token.sub;
                 session.user.role = token.role;
                 session.user.storeId = token.storeId;
                 session.user.storeName = token.storeName;

@@ -27,7 +27,7 @@ export default function IngredientsPage() {
         const ingData = await ingRes.json();
         const prodData = await prodRes.json();
         setIngredients(ingData);
-        setProducts(prodData.filter((p: any) => p.isFormula));
+        setProducts(prodData);
     };
 
     const fetchIngredients = fetchData; // Alias for backward compatibility if needed internally
@@ -117,7 +117,7 @@ export default function IngredientsPage() {
 
             {/* Tabs & Search */}
             <div className="flex flex-col md:flex-row gap-6 mb-8">
-                <div className="flex bg-surface p-1 rounded-2xl border border-border">
+                <div className="flex overflow-x-auto no-scrollbar bg-surface p-1 rounded-2xl border border-border max-w-full flex-nowrap">
                     {[
                         { id: 'BIANG', label: 'Biang Parfum' },
                         { id: 'ALCOHOL', label: 'Alkohol' },
@@ -128,7 +128,7 @@ export default function IngredientsPage() {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === tab.id
+                            className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all shrink-0 ${activeTab === tab.id
                                 ? 'bg-foreground text-background shadow-lg'
                                 : 'text-gray-500 hover:text-white'
                                 }`}
@@ -182,7 +182,7 @@ export default function IngredientsPage() {
                                                     {item.stock}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-gray-400">ml</td>
+                                            <td className="px-6 py-4 text-gray-400">{item.isFormula ? 'ml' : 'pcs'}</td>
                                             <td className="px-6 py-4">
                                                 <span className="text-accent-gold font-bold">
                                                     Rp {parseFloat(item.price || 0).toLocaleString('id-ID')}
@@ -196,52 +196,85 @@ export default function IngredientsPage() {
                                         </tr>
                                     ))
                             ) : (
-                                ingredients
-                                    .filter(i => (i.type === activeTab) && i.name.toLowerCase().includes(search.toLowerCase()))
-                                    .map((item) => (
-                                        <tr key={item.id} className="hover:bg-surface/30 transition-colors">
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-background rounded-lg border border-border">
-                                                        <Droplets className="text-accent-gold" />
+                                <>
+                                    {ingredients
+                                        .filter(i => (i.type === activeTab) && i.name.toLowerCase().includes(search.toLowerCase()))
+                                        .map((item) => (
+                                            <tr key={item.id} className="hover:bg-surface/30 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 bg-background rounded-lg border border-border">
+                                                            <Droplets className="text-accent-gold" />
+                                                        </div>
+                                                        <span className="font-medium">{item.name}</span>
                                                     </div>
-                                                    <span className="font-medium">{item.name}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`font-bold ${item.stock < 100 ? 'text-red-400' : 'text-accent-emerald'}`}>
-                                                    {item.stock}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-gray-400">{item.unit}</td>
-                                            <td className="px-6 py-4">
-                                                <span className="text-accent-gold font-bold">
-                                                    Rp {parseFloat(item.price || 0).toLocaleString('id-ID')}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <button
-                                                        onClick={() => handleOpenEdit(item)}
-                                                        className="p-2 text-gray-400 hover:text-accent-gold transition-colors"
-                                                    >
-                                                        <Edit2 size={16} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleOpenDelete(item)}
-                                                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`font-bold ${item.stock < 100 ? 'text-red-400' : 'text-accent-emerald'}`}>
+                                                        {item.stock}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-400">{item.unit}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className="text-accent-gold font-bold">
+                                                        Rp {parseFloat(item.price || 0).toLocaleString('id-ID')}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => handleOpenEdit(item)}
+                                                            className="p-2 text-gray-400 hover:text-accent-gold transition-colors"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleOpenDelete(item)}
+                                                            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+
+                                    {activeTab === 'BIANG' && products
+                                        .filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+                                        .map((item) => (
+                                            <tr key={`prod-${item.id}`} className="hover:bg-surface/30 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 bg-background rounded-lg border border-border">
+                                                            <Package className="text-accent-gold" size={20} />
+                                                        </div>
+                                                        <span className="font-medium">{item.name}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`font-bold ${item.stock < 10 ? 'text-red-400' : 'text-accent-emerald'}`}>
+                                                        {item.stock}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-400">{item.isFormula ? 'ml' : 'pcs'}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className="text-accent-gold font-bold">
+                                                        Rp {parseFloat(item.price || 0).toLocaleString('id-ID')}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex justify-end gap-2 text-xs text-gray-500 italic">
+                                                        Kelola di menu Produk
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                </>
                             )}
-                            {ingredients.length === 0 && (
+                            {ingredients.length === 0 && products.length === 0 && (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
-                                        Belum ada bahan baku.
+                                        Belum ada data barang atau produk.
                                     </td>
                                 </tr>
                             )}

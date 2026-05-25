@@ -24,6 +24,20 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL('/dashboard', req.url));
     }
 
+    // Cashier Routes protection
+    if (role === 'CASHIER') {
+        const isAllowedPath =
+            pathname === '/dashboard' ||
+            pathname === '/dashboard/pos' || pathname.startsWith('/dashboard/pos/') ||
+            pathname === '/dashboard/transactions' || pathname.startsWith('/dashboard/transactions/') ||
+            pathname === '/dashboard/reports' || pathname.startsWith('/dashboard/reports/') ||
+            pathname === '/dashboard/upgrade' || pathname.startsWith('/dashboard/upgrade/');
+
+        if (pathname.startsWith('/dashboard') && !isAllowedPath) {
+            return NextResponse.redirect(new URL('/dashboard', req.url));
+        }
+    }
+
     // 3. Approval Check (Only for Owners/Cashiers, Admin is always approved)
     const isApproved = token?.isApproved as boolean;
     const isPendingPage = pathname.startsWith('/pending');

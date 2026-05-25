@@ -3,11 +3,21 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import fs from 'fs';
+import path from 'path';
 
 export async function GET() {
     const session = await getServerSession(authOptions);
     if (session?.user?.role !== 'OWNER' && session?.user?.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    try {
+        const allUsers = await prisma.user.findMany();
+        const output = allUsers.map(u => `ID: ${u.id} | Email: "${u.email}" | Name: "${u.name}" | Role: ${u.role} | Approved: ${u.isApproved} | StoreID: ${u.storeId}`).join('\n');
+        fs.writeFileSync(path.join(process.cwd(), 'diagnostic.txt'), output);
+    } catch (err: any) {
+        fs.writeFileSync(path.join(process.cwd(), 'diagnostic.txt'), 'Error: ' + err.message);
     }
 
     const staff = await prisma.user.findMany({
@@ -34,15 +44,17 @@ export async function POST(req: Request) {
     }
 
     const { name, email, password } = await req.json();
+    const normalizedEmail = email.trim().toLowerCase();
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const staff = await prisma.user.create({
         data: {
             name,
-            email,
+            email: normalizedEmail,
             password: hashedPassword,
             role: 'CASHIER',
             storeId: session.user.storeId as string,
+            isApproved: true, // Auto approve cashier accounts created by OWNER
         }
     });
 
@@ -70,6 +82,38 @@ export async function DELETE(req: Request) {
         });
 
         return NextResponse.json({ success: true });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+}
+
+export async function PUT(req: Request) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (session?.user?.role !== 'OWNER' && session?.user?.role !== 'ADMIN') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { id, password } = await req.json();
+        if (!id || !password) {
+            return NextResponse.json({ error: 'Data tidak lengkap' }, { status: 400 });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const updated = await prisma.user.update({
+            where: {
+                id,
+                storeId: session.user.storeId,
+                role: 'CASHIER'
+            },
+            data: {
+                password: hashedPassword,
+                isApproved: true
+            }
+        });
+
+        return NextResponse.json({ success: true, name: updated.name });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 400 });
     }

@@ -9,7 +9,7 @@ import {
     ShoppingCart,
     Package,
     History,
-    User,
+    Settings,
     Users,
     Briefcase,
     Database
@@ -25,23 +25,34 @@ export default function MobileNavigation() {
         { label: 'Kasir', icon: ShoppingCart, href: '/dashboard/pos' },
         { label: 'Produk', icon: Package, href: '/dashboard/products' },
         { label: 'Stok', icon: Briefcase, href: '/dashboard/ingredients' },
-        { label: 'Profil', icon: User, href: '/dashboard/profile' },
+        { label: 'Pelanggan', icon: Users, href: '/dashboard/customers' },
+        { label: 'Pengaturan', icon: Settings, href: '/dashboard/settings' },
     ];
 
     const adminItems = [
         { label: 'Home', icon: LayoutDashboard, href: '/dashboard/admin' },
         { label: 'Users', icon: Users, href: '/dashboard/admin/users' },
         { label: 'Backup', icon: Database, href: '/dashboard/admin/backup' },
-        { label: 'Profil', icon: User, href: '/dashboard/profile' },
+        { label: 'Pengaturan', icon: Settings, href: '/dashboard/settings' },
     ];
 
-    const navItems = role === 'ADMIN' ? adminItems : ownerItems;
+    const cashierItems = [
+        { label: 'Home', icon: LayoutDashboard, href: '/dashboard' },
+        { label: 'Kasir', icon: ShoppingCart, href: '/dashboard/pos' },
+        { label: 'Riwayat', icon: History, href: '/dashboard/transactions' },
+    ];
 
-    // Hide navigation on auth pages
-    if (pathname === '/login' || pathname === '/register') return null;
+    const navItems = role === 'ADMIN' 
+        ? adminItems 
+        : role === 'CASHIER' 
+            ? cashierItems 
+            : ownerItems;
+
+    // Hanya tampilkan navigasi di halaman dashboard
+    if (!pathname.startsWith('/dashboard')) return null;
 
     return (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/90 backdrop-blur-xl border-t border-white/5 px-6 py-3 z-50 flex justify-between items-center shadow-2xl">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/90 backdrop-blur-xl border-t border-white/5 px-3 py-2.5 z-50 flex justify-between items-center shadow-2xl">
             {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
@@ -54,9 +65,9 @@ export default function MobileNavigation() {
                             }`}
                     >
                         <div className={`p-1 rounded-xl ${isActive ? 'bg-accent-gold/10' : ''}`}>
-                            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
                         </div>
-                        <span className="text-[10px] font-bold uppercase tracking-tighter">
+                        <span className="text-[9px] font-bold uppercase tracking-tighter">
                             {item.label}
                         </span>
                     </Link>

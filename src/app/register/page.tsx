@@ -32,6 +32,38 @@ export default function RegisterPage() {
 
             if (res.ok) {
                 setSuccess(true);
+
+                // Format tanggal Indonesia secara dinamis
+                const formattedDate = new Date().toLocaleDateString('id-ID', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                const message = `*📢 PENDAFTARAN MITRA BARU - AROMIX SaaS*
+--------------------------------------------------
+Halo Tim Admin AROMIX,
+
+Saya telah menyelesaikan pengisian data registrasi untuk platform AROMIX Premium Perfume Management. Berikut adalah detail informasi akun toko kami:
+
+🏢 *Detail Toko/Brand:*
+• Nama Brand: *${formData.storeName}*
+• Nama Pemilik: *${formData.name}*
+• Email Terdaftar: *${formData.email}*
+
+📅 *Tanggal Pendaftaran:*
+• ${formattedDate}
+
+Mohon kesediaan Tim Admin untuk meninjau data di atas dan melakukan aktivasi akun agar kami dapat segera menggunakan layanan.
+
+Terima kasih atas kerja samanya.
+--------------------------------------------------
+_Pesan otomatis dikirim melalui Sistem Registrasi AROMIX_`;
+
+                const whatsappUrl = `https://wa.me/6281717594886?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+
                 setTimeout(() => router.push("/login"), 3000);
             } else {
                 const data = await res.json();

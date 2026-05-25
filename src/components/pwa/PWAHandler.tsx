@@ -2,13 +2,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { Download, X, Smartphone, Sparkles } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 export default function PWAHandler() {
+    const pathname = usePathname();
     const [installPrompt, setInstallPrompt] = useState<any>(null);
     const [isVisible, setIsVisible] = useState(false);
 
+    // 1. Registrasi Service Worker (Berjalan di semua halaman untuk offline caching)
     useEffect(() => {
-        // 1. Register Service Worker
         if ('serviceWorker' in navigator) {
             const registerSW = () => {
                 navigator.serviceWorker.register('/sw.js')
@@ -23,21 +25,27 @@ export default function PWAHandler() {
                 return () => window.removeEventListener('load', registerSW);
             }
         }
+    }, []);
 
-        // 2. Catch Install Prompt
+    // 2. Tangkap Event & Atur Pop-up (Hanya di halaman /login dan jika belum pernah ditutup/diinstal)
+    useEffect(() => {
         const handler = (e: any) => {
             e.preventDefault();
             setInstallPrompt(e);
-            // Wait a bit before showing to make it feel organic
-            setTimeout(() => {
-                setIsVisible(true);
-            }, 2000);
+
+            const isDismissed = localStorage.getItem('aromix_pwa_dismissed') === 'true';
+            if (pathname === '/login' && !isDismissed) {
+                // Jeda 2 detik sebelum memunculkan agar terkesan organik
+                setTimeout(() => {
+                    setIsVisible(true);
+                }, 2000);
+            }
         };
 
         window.addEventListener('beforeinstallprompt', handler);
 
         return () => window.removeEventListener('beforeinstallprompt', handler);
-    }, []);
+    }, [pathname]);
 
     const handleInstall = async () => {
         if (!installPrompt) return;
@@ -48,10 +56,17 @@ export default function PWAHandler() {
         if (outcome === 'accepted') {
             setInstallPrompt(null);
             setIsVisible(false);
+            localStorage.setItem('aromix_pwa_dismissed', 'true');
         }
     };
 
-    if (!isVisible || !installPrompt) return null;
+    const handleClose = () => {
+        setIsVisible(false);
+        localStorage.setItem('aromix_pwa_dismissed', 'true');
+    };
+
+    // Hindari perenderan jika bukan di halaman login atau belum memenuhi syarat
+    if (pathname !== '/login' || !isVisible || !installPrompt) return null;
 
     return (
         <div className="fixed bottom-6 left-6 right-6 md:left-auto md:right-10 md:w-96 z-[100] animate-in slide-in-from-bottom-10 fade-in duration-700">
@@ -60,7 +75,7 @@ export default function PWAHandler() {
                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-accent-gold/5 blur-3xl opacity-50"></div>
 
                 <button
-                    onClick={() => setIsVisible(false)}
+                    onClick={handleClose}
                     className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
                 >
                     <X size={18} />

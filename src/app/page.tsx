@@ -31,7 +31,7 @@ export default function LandingPage() {
                     <span className="inline-block px-4 py-1.5 bg-accent-gold/10 text-accent-gold rounded-full text-xs font-bold tracking-widest uppercase mb-6">
                         Solusi SaaS Parfum Premium #1
                     </span>
-                    <h1 className="text-6xl md:text-8xl font-black mb-8 premium-gradient-text leading-[1.1]">
+                    <h1 className="text-4xl sm:text-6xl md:text-8xl font-black mb-8 premium-gradient-text leading-[1.1]">
                         Kelola Bisnis Parfum<br />Tanpa Ribet.
                     </h1>
                     <p className="text-gray-400 text-xl max-w-2xl mx-auto mb-12">

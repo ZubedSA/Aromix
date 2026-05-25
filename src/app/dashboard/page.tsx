@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import {
     BarChart3,
     Package,
@@ -21,7 +21,9 @@ import {
     History,
     FileText,
     FlaskConical,
-    ShoppingBag
+    ShoppingBag,
+    Lock,
+    LogOut
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -30,6 +32,8 @@ export default function DashboardPage() {
     const router = useRouter();
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
+    const [isDesktopDropdownOpen, setIsDesktopDropdownOpen] = useState(false);
 
     useEffect(() => {
         if (session?.user?.role === 'ADMIN') {
@@ -71,9 +75,52 @@ export default function DashboardPage() {
                             <Bell size={20} className="text-gray-400" />
                             <span className="absolute top-2 right-2 w-2 h-2 bg-accent-gold rounded-full" />
                         </button>
-                        <button className="p-2 bg-surface border border-border rounded-xl">
-                            <User size={20} className="text-gray-400" />
-                        </button>
+                        <div className="relative">
+                            <button 
+                                onClick={() => setIsMobileDropdownOpen(!isMobileDropdownOpen)}
+                                className="p-2 bg-surface border border-border rounded-xl hover:border-accent-gold/50 transition-all"
+                            >
+                                <User size={20} className={isMobileDropdownOpen ? "text-accent-gold" : "text-gray-400"} />
+                            </button>
+                            {isMobileDropdownOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setIsMobileDropdownOpen(false)} />
+                                    <div className="absolute right-0 mt-2 w-48 bg-surface/95 backdrop-blur-md border border-border rounded-2xl p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        {session?.user?.role !== 'CASHIER' && (
+                                            <>
+                                                <Link 
+                                                    href="/dashboard/settings" 
+                                                    onClick={() => setIsMobileDropdownOpen(false)}
+                                                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white rounded-xl hover:bg-accent-gold/10 transition-all"
+                                                >
+                                                    <User size={16} className="text-accent-gold" />
+                                                    <span className="font-medium">Profil</span>
+                                                </Link>
+                                                <Link 
+                                                    href="/dashboard/settings?tab=security" 
+                                                    onClick={() => setIsMobileDropdownOpen(false)}
+                                                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white rounded-xl hover:bg-accent-gold/10 transition-all"
+                                                >
+                                                    <Lock size={16} className="text-accent-gold" />
+                                                    <span className="font-medium">Ubah Password</span>
+                                                </Link>
+                                                <hr className="border-border my-1" />
+                                            </>
+                                        )}
+                                        <button 
+                                            onClick={() => {
+                                                setIsMobileDropdownOpen(false);
+                                                signOut({ callbackUrl: '/login' });
+                                            }}
+                                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:text-red-300 rounded-xl hover:bg-red-500/10 transition-all text-left"
+                                        >
+                                            <LogOut size={16} />
+                                            <span className="font-medium">Logout</span>
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </header>
 
@@ -149,10 +196,14 @@ export default function DashboardPage() {
                     <div className="grid grid-cols-2 gap-3 py-4">
                         <ToolItem icon={ShoppingCart} label="Kasir / POS" href="/dashboard/pos" />
                         <ToolItem icon={History} label="Riwayat & Laporan" href="/dashboard/transactions" />
-                        <ToolItem icon={Package} label="Produk & Katalog" href="/dashboard/products" />
-                        <ToolItem icon={Droplets} label="Inventory / Stok" href="/dashboard/ingredients" />
-                        <ToolItem icon={Users} label="Pelanggan & Staff" href="/dashboard/customers" />
-                        <ToolItem icon={Settings} label="Pengaturan" href="/dashboard/settings" />
+                        {session?.user?.role !== 'CASHIER' && (
+                            <>
+                                <ToolItem icon={Package} label="Produk & Katalog" href="/dashboard/products" />
+                                <ToolItem icon={Droplets} label="Inventory / Stok" href="/dashboard/ingredients" />
+                                <ToolItem icon={Users} label="Pelanggan & Staff" href="/dashboard/customers" />
+                                <ToolItem icon={Settings} label="Pengaturan" href="/dashboard/settings" />
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
@@ -166,11 +217,57 @@ export default function DashboardPage() {
                         </h1>
                         <p className="text-gray-400 mt-1">Dashboard Ringkasan Operasional</p>
                     </div>
-                    <div className="flex gap-4">
-                        <button className="bg-surface border border-border px-4 py-2 rounded-full hover:border-accent-gold/50 transition-all flex items-center gap-2">
-                            <User size={18} />
-                            <span>Profile</span>
-                        </button>
+                    <div className="flex gap-4 relative">
+                        <div className="relative">
+                            <button 
+                                onClick={() => setIsDesktopDropdownOpen(!isDesktopDropdownOpen)}
+                                className="bg-surface border border-border px-4 py-2 rounded-full hover:border-accent-gold/50 transition-all flex items-center gap-2"
+                            >
+                                <User size={18} className={isDesktopDropdownOpen ? "text-accent-gold" : "text-gray-400"} />
+                                <span className={isDesktopDropdownOpen ? "text-accent-gold" : "text-white"}>Profile</span>
+                            </button>
+                            {isDesktopDropdownOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setIsDesktopDropdownOpen(false)} />
+                                    <div className="absolute right-0 mt-2 w-52 bg-surface/95 backdrop-blur-md border border-border rounded-2xl p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="px-4 py-2 text-[10px] font-bold tracking-wider text-gray-500 uppercase">
+                                            Menu Akun
+                                        </div>
+                                        {session?.user?.role !== 'CASHIER' && (
+                                            <>
+                                                <Link 
+                                                    href="/dashboard/settings" 
+                                                    onClick={() => setIsDesktopDropdownOpen(false)}
+                                                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white rounded-xl hover:bg-accent-gold/10 transition-all"
+                                                >
+                                                    <User size={16} className="text-accent-gold" />
+                                                    <span className="font-medium">Profil Toko</span>
+                                                </Link>
+                                                <Link 
+                                                    href="/dashboard/settings?tab=security" 
+                                                    onClick={() => setIsDesktopDropdownOpen(false)}
+                                                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white rounded-xl hover:bg-accent-gold/10 transition-all"
+                                                >
+                                                    <Lock size={16} className="text-accent-gold" />
+                                                    <span className="font-medium">Ubah Password</span>
+                                                </Link>
+                                                <hr className="border-border my-1" />
+                                            </>
+                                        )}
+                                        <button 
+                                            onClick={() => {
+                                                setIsDesktopDropdownOpen(false);
+                                                signOut({ callbackUrl: '/login' });
+                                            }}
+                                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:text-red-300 rounded-xl hover:bg-red-500/10 transition-all text-left"
+                                        >
+                                            <LogOut size={16} />
+                                            <span className="font-medium">Logout</span>
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </header>
 
@@ -180,9 +277,13 @@ export default function DashboardPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
                         <ToolItem icon={ShoppingCart} label="Kasir / POS" href="/dashboard/pos" />
                         <ToolItem icon={History} label="Riwayat & Laporan" href="/dashboard/transactions" />
-                        <ToolItem icon={Package} label="Produk & Katalog" href="/dashboard/products" />
-                        <ToolItem icon={Droplets} label="Inventory / Stok" href="/dashboard/ingredients" />
-                        <ToolItem icon={Users} label="Pelanggan & Staff" href="/dashboard/customers" />
+                        {session?.user?.role !== 'CASHIER' && (
+                            <>
+                                <ToolItem icon={Package} label="Produk & Katalog" href="/dashboard/products" />
+                                <ToolItem icon={Droplets} label="Inventory / Stok" href="/dashboard/ingredients" />
+                                <ToolItem icon={Users} label="Pelanggan & Staff" href="/dashboard/customers" />
+                            </>
+                        )}
                     </div>
                 </div>
 

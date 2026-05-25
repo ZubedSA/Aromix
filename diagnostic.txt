@@ -1,0 +1,7 @@
+ID: cmm5372ur0003uke4jpa931x9 | Email: "zubed@gmail.com" | Name: "Zubed" | Role: OWNER | Approved: true | StoreID: cmm536zdk0000uke4dcvi93t4
+ID: cmm540s2g0000uk1soald46t2 | Email: "admin@gmail.com" | Name: "Super Admin" | Role: ADMIN | Approved: true | StoreID: null
+ID: cmm6bmvz20001l86xdvbjok16 | Email: "owner.final@aromix.id" | Name: "Owner AROMIX (Final)" | Role: OWNER | Approved: false | StoreID: cmm52oxmx0000ukrsw4u2p2sl
+ID: cmm6bmwlp0003l86x0gmshkbg | Email: "admin.final@aromix.id" | Name: "Super Admin (Final)" | Role: ADMIN | Approved: false | StoreID: null
+ID: cmpljabmx0004ukto2bj7wbcn | Email: "coba@gmail.com" | Name: "coba" | Role: OWNER | Approved: false | StoreID: cmpljabik0000uktomju1zwfc
+ID: cmp9biosr0004i8045l77pejl | Email: "istanaparfum@gmail.com" | Name: "Eko" | Role: OWNER | Approved: true | StoreID: cmp9bio330000i8047xvl264d
+ID: cmpllqzar000suktodhp4la7q | Email: "kasir@gmail.com" | Name: "kasir 1" | Role: CASHIER | Approved: true | StoreID: cmp9bio330000i8047xvl264d

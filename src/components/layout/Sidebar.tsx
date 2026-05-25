@@ -80,25 +80,27 @@ export default function Sidebar() {
                             href="/dashboard/transactions"
                             active={pathname === '/dashboard/transactions' || pathname === '/dashboard/reports'}
                         />
-                        <SidebarLink
-                            icon={<Package size={20} />}
-                            label="Produk & Katalog"
-                            href="/dashboard/products"
-                            active={pathname === '/dashboard/products' || pathname === '/dashboard/menu' || pathname === '/dashboard/formulas'}
-                        />
-                        <SidebarLink
-                            icon={<Briefcase size={20} />}
-                            label="Inventory / Stok"
-                            href="/dashboard/ingredients"
-                            active={pathname === '/dashboard/ingredients' || pathname === '/dashboard/suppliers'}
-                        />
                         {role === 'OWNER' && (
-                            <SidebarLink
-                                icon={<Users size={20} />}
-                                label="Pelanggan & Staff"
-                                href="/dashboard/customers"
-                                active={pathname === '/dashboard/customers' || pathname === '/dashboard/staff'}
-                            />
+                            <>
+                                <SidebarLink
+                                    icon={<Package size={20} />}
+                                    label="Produk & Katalog"
+                                    href="/dashboard/products"
+                                    active={pathname === '/dashboard/products' || pathname === '/dashboard/menu' || pathname === '/dashboard/formulas'}
+                                />
+                                <SidebarLink
+                                    icon={<Briefcase size={20} />}
+                                    label="Inventory / Stok"
+                                    href="/dashboard/ingredients"
+                                    active={pathname === '/dashboard/ingredients' || pathname === '/dashboard/suppliers'}
+                                />
+                                <SidebarLink
+                                    icon={<Users size={20} />}
+                                    label="Pelanggan & Staff"
+                                    href="/dashboard/customers"
+                                    active={pathname === '/dashboard/customers' || pathname === '/dashboard/staff'}
+                                />
+                            </>
                         )}
                     </>
                 )}
@@ -124,12 +126,14 @@ export default function Sidebar() {
 
             {/* Footer Nav */}
             <div className="pt-4 border-t border-border space-y-2">
-                <SidebarLink
-                    icon={<Settings size={20} />}
-                    label="Pengaturan"
-                    href="/dashboard/settings"
-                    active={pathname === '/dashboard/settings'}
-                />
+                {role !== 'CASHIER' && (
+                    <SidebarLink
+                        icon={<Settings size={20} />}
+                        label="Pengaturan"
+                        href="/dashboard/settings"
+                        active={pathname === '/dashboard/settings'}
+                    />
+                )}
                 <button
                     onClick={() => signOut({ callbackUrl: '/login' })}
                     className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-red-400 transition-colors"

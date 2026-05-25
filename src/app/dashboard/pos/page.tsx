@@ -11,7 +11,9 @@ import {
     Droplets,
     UserPlus,
     X,
-    Users
+    Users,
+    AlertCircle,
+    Printer
 } from 'lucide-react';
 
 // Product logic
@@ -22,6 +24,12 @@ export default function POSPage() {
     const [cart, setCart] = useState<any[]>([]);
     const [search, setSearch] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
+    const [successModal, setSuccessModal] = useState({
+        isOpen: false,
+        invoiceNumber: '',
+        isError: false,
+        message: ''
+    });
 
     // Customer states
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
@@ -113,15 +121,30 @@ export default function POSPage() {
             const data = await res.json();
 
             if (res.ok) {
-                alert(`Transaksi Berhasil! Invoice: ${data.invoiceNumber}`);
+                setSuccessModal({
+                    isOpen: true,
+                    invoiceNumber: data.invoiceNumber,
+                    isError: false,
+                    message: 'Transaksi Anda telah berhasil diproses.'
+                });
                 setCart([]);
                 setSelectedCustomer(null);
                 fetchProducts(); // Refresh stock
             } else {
-                alert(`Error: ${data.error}`);
+                setSuccessModal({
+                    isOpen: true,
+                    invoiceNumber: '',
+                    isError: true,
+                    message: data.error || 'Terjadi kesalahan saat memproses transaksi.'
+                });
             }
         } catch (error) {
-            alert('Terjadi kesalahan koneksi.');
+            setSuccessModal({
+                isOpen: true,
+                invoiceNumber: '',
+                isError: true,
+                message: 'Terjadi kesalahan koneksi sistem.'
+            });
         } finally {
             setIsProcessing(false);
         }
@@ -428,6 +451,66 @@ export default function POSPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Premium Transaction Confirmation Modal */}
+            {successModal.isOpen && (
+                <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
+                    <div className="glass-panel w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl p-8 text-center space-y-6 relative group animate-in scale-in duration-300">
+                        {/* Elegant background glow */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-accent-gold/10 blur-3xl -mr-10 -mt-10" />
+
+                        {/* Status Icon */}
+                        <div className="mx-auto w-20 h-20 bg-background/50 border border-border rounded-full flex items-center justify-center shadow-lg relative z-10">
+                            {successModal.isError ? (
+                                <AlertCircle size={40} className="text-red-500 animate-bounce" />
+                            ) : (
+                                <CheckCircle2 size={40} className="text-accent-gold animate-pulse" />
+                            )}
+                        </div>
+
+                        {/* Title & Desc */}
+                        <div className="space-y-2 relative z-10">
+                            <h3 className="text-2xl font-black italic tracking-tighter uppercase premium-gradient-text">
+                                {successModal.isError ? 'Transaksi Gagal' : 'Transaksi Sukses'}
+                            </h3>
+                            <p className="text-sm text-gray-400">
+                                {successModal.message}
+                            </p>
+                        </div>
+
+                        {/* Invoice Detail (only if success) */}
+                        {!successModal.isError && successModal.invoiceNumber && (
+                            <div className="space-y-1 relative z-10">
+                                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Nomor Invoice</span>
+                                <div className="font-mono text-xs font-bold text-accent-gold bg-accent-gold/10 border border-accent-gold/20 px-4 py-2.5 rounded-2xl inline-block shadow-inner select-all">
+                                    {successModal.invoiceNumber}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Action buttons */}
+                        <div className="pt-2 flex flex-col gap-3 relative z-10">
+                            {!successModal.isError && (
+                                <button 
+                                    onClick={() => {
+                                        window.print();
+                                    }}
+                                    className="w-full bg-surface border border-border text-gray-300 hover:text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2 hover:border-accent-gold/30 transition-all text-xs uppercase tracking-wider"
+                                >
+                                    <Printer size={16} />
+                                    Cetak Struk / Nota
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setSuccessModal({ ...successModal, isOpen: false })}
+                                className="w-full bg-accent-gold text-black font-black py-3.5 rounded-2xl hover:bg-white transition-all text-xs uppercase tracking-widest shadow-glass-gold"
+                            >
+                                Selesai
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
