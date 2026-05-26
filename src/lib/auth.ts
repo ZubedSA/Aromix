@@ -2,8 +2,7 @@ import NextAuth, { NextAuthOptions, DefaultSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import fs from 'fs';
-import path from 'path';
+
 
 declare module "next-auth" {
     interface Session {
@@ -49,14 +48,6 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 try {
-                    try {
-                        const allUsers = await prisma.user.findMany();
-                        const output = allUsers.map(u => `ID: ${u.id} | Email: "${u.email}" | Name: "${u.name}" | Role: ${u.role} | Approved: ${u.isApproved} | StoreID: ${u.storeId}`).join('\n');
-                        fs.writeFileSync(path.join(process.cwd(), 'diagnostic.txt'), output);
-                    } catch (e: any) {
-                        fs.writeFileSync(path.join(process.cwd(), 'diagnostic.txt'), 'Diag Error: ' + e.message);
-                    }
-
                     const normalizedEmail = credentials.email.trim().toLowerCase();
                     console.log('[AUTH DEBUG]: Authorizing', normalizedEmail);
                     

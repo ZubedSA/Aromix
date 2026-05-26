@@ -3,8 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import fs from 'fs';
-import path from 'path';
+
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -12,13 +11,6 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    try {
-        const allUsers = await prisma.user.findMany();
-        const output = allUsers.map(u => `ID: ${u.id} | Email: "${u.email}" | Name: "${u.name}" | Role: ${u.role} | Approved: ${u.isApproved} | StoreID: ${u.storeId}`).join('\n');
-        fs.writeFileSync(path.join(process.cwd(), 'diagnostic.txt'), output);
-    } catch (err: any) {
-        fs.writeFileSync(path.join(process.cwd(), 'diagnostic.txt'), 'Error: ' + err.message);
-    }
 
     const staff = await prisma.user.findMany({
         where: {
