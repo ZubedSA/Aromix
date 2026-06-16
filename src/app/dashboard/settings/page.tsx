@@ -23,7 +23,10 @@ import {
     Trash2,
     UserPlus,
     X,
-    Key
+    Key,
+    QrCode,
+    Download,
+    Copy
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
@@ -32,6 +35,7 @@ export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState('profile');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [copied, setCopied] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
 
     const [userProfile, setUserProfile] = useState({ name: '', email: '' });
@@ -243,8 +247,14 @@ export default function SettingsPage() {
                 fetch('/api/store')
             ]);
 
-            if (uRes.ok) setUserProfile(await uRes.json());
-            if (sRes.ok) setStoreProfile(await sRes.json());
+            if (uRes.ok) {
+                const uData = await uRes.json();
+                setUserProfile({ name: uData.name || '', email: uData.email || '' });
+            }
+            if (sRes.ok) {
+                const sData = await sRes.json();
+                setStoreProfile({ name: sData.name || '', address: sData.address || '', phone: sData.phone || '' });
+            }
         } catch (error) {
             console.error(error);
         } finally {
@@ -278,10 +288,17 @@ export default function SettingsPage() {
             const res = await fetch('/api/store', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(storeProfile)
+                body: JSON.stringify({
+                    name: storeProfile.name,
+                    address: storeProfile.address,
+                    phone: storeProfile.phone
+                })
             });
             if (res.ok) {
                 setMessage({ type: 'success', text: 'Informasi toko berhasil diperbarui!' });
+            } else {
+                const err = await res.json();
+                setMessage({ type: 'error', text: err.error || 'Gagal memperbarui informasi toko.' });
             }
         } catch (error) {
             setMessage({ type: 'error', text: 'Gagal memperbarui informasi toko.' });
@@ -322,6 +339,38 @@ export default function SettingsPage() {
             setMessage({ type: 'error', text: 'Terjadi kesalahan sistem.' });
         } finally {
             setIsChangingPass(false);
+        }
+    };
+
+    const handleCopyLink = () => {
+        const storeId = session?.user?.storeId;
+        if (!storeId) return;
+        const catalogUrl = `${window.location.origin}/catalog/${storeId}`;
+        navigator.clipboard.writeText(catalogUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleDownloadQRCode = async () => {
+        const storeId = session?.user?.storeId;
+        if (!storeId) return;
+        const catalogUrl = `${window.location.origin}/catalog/${storeId}`;
+        const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(catalogUrl)}`;
+
+        try {
+            const response = await fetch(qrCodeUrl);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `QRCode_Katalog_${storeProfile.name || 'Toko'}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Gagal mengunduh QR Code:', error);
+            window.open(qrCodeUrl, '_blank');
         }
     };
 
@@ -378,6 +427,12 @@ export default function SettingsPage() {
                                 onClick={() => setActiveTab('users')}
                                 icon={<Users size={18} />}
                                 label="Manajemen Kasir"
+                            />
+                            <TabButton
+                                active={activeTab === 'catalog'}
+                                onClick={() => setActiveTab('catalog')}
+                                icon={<QrCode size={18} />}
+                                label="Katalog & QR Code"
                             />
                         </>
                     )}
@@ -913,6 +968,62 @@ export default function SettingsPage() {
                                         </div>
                                     </div>
                                 )}
+                            </div>
+                        )}
+
+                        {activeTab === 'catalog' && session?.user?.storeId && (
+                            <div className="space-y-6">
+                                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                    <QrCode className="text-accent-gold" size={20} />
+                                    Katalog & QR Code Toko
+                                </h3>
+                                <p className="text-sm text-gray-400">
+                                    Pelanggan dapat memindai kode QR di bawah untuk langsung membuka katalog online produk dan harga toko Anda via ponsel mereka.
+                                </p>
+
+                                <div className="flex flex-col items-center justify-center p-6 bg-surface/50 border border-border/80 rounded-2xl max-w-sm mx-auto text-center gap-4">
+                                    <div className="bg-white p-4 rounded-2xl shadow-lg border border-border/10">
+                                        <img 
+                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/catalog/${session.user.storeId}` : '')}`} 
+                                            alt="QR Code Katalog Toko"
+                                            className="w-48 h-48 block"
+                                        />
+                                    </div>
+                                    <div className="w-full">
+                                        <h4 className="font-bold text-white text-sm mb-1">{storeProfile.name || 'Istana Parfum'}</h4>
+                                        <p className="text-xs text-gray-500 truncate">
+                                            {typeof window !== 'undefined' ? `${window.location.origin}/catalog/${session.user.storeId}` : ''}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex flex-col gap-2 w-full mt-2">
+                                        <button
+                                            type="button"
+                                            onClick={handleCopyLink}
+                                            className="w-full py-2.5 bg-surface border border-border hover:border-accent-gold/40 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:text-white transition-all active:scale-[0.98]"
+                                        >
+                                            {copied ? <Check size={14} className="text-accent-emerald" /> : <Copy size={14} />}
+                                            {copied ? 'Tersalin!' : 'Salin Link Katalog'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleDownloadQRCode}
+                                            className="w-full py-2.5 bg-accent-gold text-background rounded-xl text-xs font-black flex items-center justify-center gap-2 hover:bg-accent-gold/80 transition-all active:scale-[0.98]"
+                                        >
+                                            <Download size={14} />
+                                            Unduh QR Code
+                                        </button>
+                                        <a
+                                            href={typeof window !== 'undefined' ? `/catalog/${session.user.storeId}` : '#'}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-full py-2.5 bg-surface/40 hover:bg-surface border border-border/60 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:text-white transition-all text-center block"
+                                        >
+                                            <Eye size={14} />
+                                            Lihat Halaman Katalog
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>

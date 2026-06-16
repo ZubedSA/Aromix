@@ -16,9 +16,11 @@ export default function ProductsPage() {
     const initialForm = {
         name: '',
         price: '',
+        purchasePrice: '',
         stock: '0',
         isFormula: false,
-        formulaItems: [{ ingredientId: '', productId: '', quantity: '' }]
+        formulaItems: [{ ingredientId: '', productId: '', quantity: '' }],
+        code: ''
     };
     const [formData, setFormData] = useState(initialForm);
 
@@ -49,8 +51,10 @@ export default function ProductsPage() {
         setFormData({
             name: product.name,
             price: product.price.toString(),
+            purchasePrice: (product.purchasePrice || 0).toString(),
             stock: product.stock.toString(),
             isFormula: product.isFormula,
+            code: product.code || '',
             formulaItems: product.formula?.items?.map((item: any) => ({
                 ingredientId: item.ingredientId,
                 productId: item.productId,
@@ -94,11 +98,16 @@ export default function ProductsPage() {
             const url = selectedProduct ? `/api/products/${selectedProduct.id}` : '/api/products';
             const method = selectedProduct ? 'PATCH' : 'POST';
 
-            await fetch(url, {
+            const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.error || 'Terjadi kesalahan saat menyimpan produk.');
+                return;
+            }
             setIsModalOpen(false);
             fetchData();
         } catch (error) {
@@ -162,7 +171,10 @@ export default function ProductsPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).map((product) => (
+                {products.filter(p => 
+                    p.name.toLowerCase().includes(search.toLowerCase()) ||
+                    (p.code && p.code.toLowerCase().includes(search.toLowerCase()))
+                ).map((product) => (
                     <div key={product.id} className="glass-panel p-6 rounded-2xl hover:border-accent-gold/20 transition-all group">
                         <div className="flex justify-between items-start mb-6">
                             <div className="bg-background p-3 rounded-xl border border-border group-hover:border-accent-gold/50 transition-all">
@@ -185,6 +197,13 @@ export default function ProductsPage() {
                         </div>
 
                         <h3 className="text-xl font-bold mb-1">{product.name}</h3>
+                        <div className="flex gap-2 items-center mb-1">
+                            {product.code && (
+                                <span className="text-[10px] bg-background border border-border px-1.5 py-0.5 rounded font-mono text-gray-400">
+                                    {product.code}
+                                </span>
+                            )}
+                        </div>
                         <p className="text-accent-emerald font-semibold mb-4 text-sm">Rp {parseFloat(product.price).toLocaleString('id-ID')}</p>
 
                         <div className="flex justify-between items-center pt-4 border-t border-border">
@@ -237,6 +256,15 @@ export default function ProductsPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-4">
                                     <div>
+                                        <label className="block text-sm text-gray-400 mb-1">Kode / Barcode (Opsional)</label>
+                                        <input
+                                            placeholder="Contoh: 899700900123"
+                                            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-accent-gold"
+                                            value={formData.code}
+                                            onChange={e => setFormData({ ...formData, code: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
                                         <label className="block text-sm text-gray-400 mb-1">Nama Produk</label>
                                         <input
                                             required
@@ -246,16 +274,29 @@ export default function ProductsPage() {
                                             onChange={e => setFormData({ ...formData, name: e.target.value })}
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm text-gray-400 mb-1">Harga Jual (Rp)</label>
-                                        <input
-                                            required
-                                            type="number"
-                                            placeholder="0"
-                                            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-accent-gold"
-                                            value={formData.price}
-                                            onChange={e => setFormData({ ...formData, price: e.target.value })}
-                                        />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm text-gray-400 mb-1">Harga Beli / HPP (Rp)</label>
+                                            <input
+                                                required
+                                                type="number"
+                                                placeholder="0"
+                                                className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-accent-gold"
+                                                value={formData.purchasePrice}
+                                                onChange={e => setFormData({ ...formData, purchasePrice: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm text-gray-400 mb-1">Harga Jual (Rp)</label>
+                                            <input
+                                                required
+                                                type="number"
+                                                placeholder="0"
+                                                className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-accent-gold"
+                                                value={formData.price}
+                                                onChange={e => setFormData({ ...formData, price: e.target.value })}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 

@@ -46,6 +46,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                 unit: data.unit,
                 stock: parseFloat(data.stock),
                 price: parseFloat(data.price) || 0,
+                purchasePrice: parseFloat(data.purchasePrice) || 0,
                 type: data.type
             }
         });

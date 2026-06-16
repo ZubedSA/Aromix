@@ -6,7 +6,7 @@ export class TransactionService {
      * Menangani pemotongan stok bahan baku (untuk produk formula)
      * atau pemotongan stok produk langsung.
      */
-    static async createTransaction(storeId: string, cashierName: string, items: { productId?: string, ingredientId?: string, quantity: number, isOwnBottle?: boolean, bottleId?: string }[], customerId?: string) {
+    static async createTransaction(storeId: string, cashierName: string, items: { productId?: string, ingredientId?: string, quantity: number, isOwnBottle?: boolean, bottleId?: string }[], customerId?: string, paymentMethod?: string) {
         return await prisma.$transaction(async (tx) => {
             let totalAmount = 0;
             const transactionItems = [];
@@ -20,8 +20,7 @@ export class TransactionService {
 
                     if (!product) throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan.`);
 
-                    const subtotal = Number(product.price) * item.quantity;
-                    totalAmount += subtotal;
+                    let subtotal = Number(product.price) * item.quantity;
 
                     if (product.isFormula && product.formula) {
                         for (const formulaItem of product.formula.items) {
@@ -49,18 +48,28 @@ export class TransactionService {
                     }
 
                     if (!item.isOwnBottle && item.bottleId) {
+                        const bottle = await tx.ingredient.findFirst({
+                            where: { id: item.bottleId, type: 'BOTOL', storeId }
+                        });
+                        if (!bottle) throw new Error(`Botol tidak ditemukan.`);
+
                         const updateCount = await tx.ingredient.updateMany({
                             where: { id: item.bottleId, type: 'BOTOL', storeId, stock: { gte: item.quantity } },
                             data: { stock: { decrement: item.quantity } }
                         });
-                        if (updateCount.count === 0) throw new Error(`Stok botol tidak mencukupi.`);
+                        if (updateCount.count === 0) throw new Error(`Stok botol '${bottle.name}' tidak mencukupi.`);
+
+                        subtotal += Number(bottle.price) * item.quantity;
                     }
+
+                    totalAmount += subtotal;
 
                     transactionItems.push({
                         productId: product.id,
                         ingredientId: null,
                         quantity: item.quantity,
                         price: product.price,
+                        purchasePrice: product.purchasePrice,
                         subtotal,
                         isOwnBottle: !!item.isOwnBottle,
                         bottleId: item.bottleId || null
@@ -88,6 +97,7 @@ export class TransactionService {
                         ingredientId: ingredient.id,
                         quantity: item.quantity,
                         price: ingredient.price,
+                        purchasePrice: ingredient.purchasePrice,
                         subtotal,
                         isOwnBottle: false,
                         bottleId: null
@@ -102,11 +112,20 @@ export class TransactionService {
                     cashierName,
                     storeId,
                     customerId: customerId || null,
+                    paymentMethod: paymentMethod || "TUNAI",
                     items: {
                         create: transactionItems
                     }
                 },
-                include: { items: true }
+                include: {
+                    items: {
+                        include: {
+                            product: { select: { name: true, purchasePrice: true } },
+                            ingredient: { select: { name: true, purchasePrice: true } }
+                        }
+                    },
+                    customer: true
+                }
             });
         });
     }

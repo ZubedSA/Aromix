@@ -28,7 +28,21 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         const storeId = session.user.storeId as string;
 
         const productId = params.id;
-        const { name, price, stock, isFormula, formulaItems } = await req.json();
+        const { name, price, purchasePrice, stock, isFormula, formulaItems, code } = await req.json();
+
+        // Validasi duplikasi barcode dalam satu toko sebelum mengupdate (dikecualikan untuk produk saat ini)
+        if (code && code.trim() !== '') {
+            const existingProduct = await prisma.product.findFirst({
+                where: { 
+                    storeId, 
+                    code: code.trim(),
+                    id: { not: productId }
+                }
+            });
+            if (existingProduct) {
+                return NextResponse.json({ error: 'Kode / Barcode sudah digunakan oleh produk lain di toko ini.' }, { status: 400 });
+            }
+        }
 
         const product = await prisma.$transaction(async (tx) => {
             // Get old product and formula for stock reversal
@@ -84,8 +98,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                 data: {
                     name,
                     price: parseFloat(price),
+                    purchasePrice: parseFloat(purchasePrice) || 0,
                     stock: totalStock,
-                    isFormula
+                    isFormula,
+                    code: code && code.trim() !== '' ? code.trim() : null
                 }
             });
 
@@ -116,6 +132,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
         return NextResponse.json(product);
     } catch (error: any) {
+        if (error.code === 'P2002') {
+            return NextResponse.json({ error: 'Kode / Barcode sudah digunakan oleh produk lain di toko ini.' }, { status: 400 });
+        }
         return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }

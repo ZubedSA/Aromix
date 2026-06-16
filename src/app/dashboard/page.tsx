@@ -186,8 +186,8 @@ export default function DashboardPage() {
                             color="border-red-500"
                         />
                         <CircularStat
-                            value={Math.floor(Math.random() * 50) + 1}
-                            label="Baru"
+                            value={`Rp ${((stats?.labaToday || 0) / 1000).toFixed(0)}k`}
+                            label="Laba"
                             color="border-accent-emerald"
                         />
                     </div>
@@ -295,30 +295,36 @@ export default function DashboardPage() {
                         trend="Total Omzet"
                     />
                     <StatCard
+                        title="Laba Hari Ini"
+                        value={`Rp ${stats?.labaToday?.toLocaleString('id-ID') || 0}`}
+                        icon={<TrendingUp className="text-accent-gold" />}
+                        trend="Keuntungan Bersih"
+                    />
+                    <StatCard
                         title="Total Transaksi"
                         value={stats?.transactionCount || 0}
-                        icon={<ShoppingCart className="text-accent-gold" />}
+                        icon={<ShoppingCart className="text-blue-400" />}
                         trend="Hari ini"
                     />
                     <StatCard
                         title="Bahan Stok Rendah"
                         value={`${stats?.lowStockIngredients?.length || 0} Item`}
-                        icon={<Droplets className="text-blue-400" />}
+                        icon={<Droplets className="text-red-500" />}
                         trend="Segera periksa"
-                    />
-                    <StatCard
-                        title="Produk Terlaris"
-                        value={stats?.topProducts?.length || 0}
-                        icon={<Package className="text-accent-gold" />}
-                        trend="Produk Unggulan"
                     />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2">
                         <SectionHeader title="Aktivitas Penjualan" />
-                        <div className="glass-panel rounded-2xl h-80 flex items-center justify-center text-gray-500">
-                            [Grafik Penjualan Premium Akan Muncul Di Sini]
+                        <div className="glass-panel rounded-2xl p-6 h-80">
+                            {stats?.salesTrend && stats.salesTrend.length > 0 ? (
+                                <SalesChart data={stats.salesTrend} />
+                            ) : (
+                                <div className="h-full flex items-center justify-center text-gray-500">
+                                    Belum ada data penjualan
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -327,7 +333,7 @@ export default function DashboardPage() {
                         <div className="glass-panel rounded-2xl p-6 space-y-4">
                             {stats?.topProducts?.length > 0 ? (
                                 stats.topProducts.map((p: any, idx: number) => (
-                                    <BestSellerItem key={idx} name={`Product ID: ${p.productId}`} sold={p._sum.quantity} />
+                                    <BestSellerItem key={idx} rank={idx + 1} name={p.name} sold={p.totalSold} />
                                 ))
                             ) : (
                                 <p className="text-sm text-gray-500 text-center">Belum ada data</p>
@@ -399,11 +405,75 @@ function SectionHeader({ title }: { title: string }) {
     );
 }
 
-function BestSellerItem({ name, sold }: { name: string, sold: number }) {
+function BestSellerItem({ rank, name, sold }: { rank: number, name: string, sold: number }) {
+    const medals = ['🥇', '🥈', '🥉'];
     return (
-        <div className="flex justify-between items-center">
-            <span className="text-gray-300">{name}</span>
-            <span className="font-semibold text-accent-emerald">{sold} terjual</span>
+        <div className="flex items-center gap-3">
+            <span className="text-lg w-8 text-center">
+                {rank <= 3 ? medals[rank - 1] : <span className="text-xs text-gray-500 font-bold">#{rank}</span>}
+            </span>
+            <span className="text-gray-300 flex-1 truncate text-sm">{name}</span>
+            <span className="font-bold text-accent-emerald text-sm whitespace-nowrap">{sold} terjual</span>
+        </div>
+    );
+}
+
+function SalesChart({ data }: { data: { date: string; label: string; total: number; count: number }[] }) {
+    const maxTotal = Math.max(...data.map(d => d.total), 1);
+    const [animated, setAnimated] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setAnimated(true), 100);
+        return () => clearTimeout(timer);
+    }, []);
+
+    const barMaxHeight = 180; // px
+
+    return (
+        <div className="h-full flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">7 Hari Terakhir</p>
+                <p className="text-xs text-gray-500">
+                    Total: <span className="text-accent-gold font-bold">Rp {data.reduce((s, d) => s + d.total, 0).toLocaleString('id-ID')}</span>
+                </p>
+            </div>
+            <div className="flex-1 flex items-end gap-3 px-2">
+                {data.map((d, i) => {
+                    const ratio = maxTotal > 0 ? d.total / maxTotal : 0;
+                    const barHeight = animated ? Math.max(ratio * barMaxHeight, d.total > 0 ? 12 : 4) : 4;
+                    const isToday = i === data.length - 1;
+                    return (
+                        <div key={d.date} className="flex-1 flex flex-col items-center justify-end group cursor-pointer" 
+                             title={`${d.label}: Rp ${d.total.toLocaleString('id-ID')} (${d.count} transaksi)`}>
+                            {/* Value label */}
+                            <div className={`text-[10px] font-bold mb-1 transition-all duration-700 ${
+                                animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                            } ${d.total > 0 ? (isToday ? 'text-accent-gold' : 'text-gray-400') : 'text-gray-600'}`}
+                                 style={{ transitionDelay: `${i * 100 + 300}ms` }}>
+                                {d.total > 0 ? `${(d.total / 1000).toFixed(0)}k` : '-'}
+                            </div>
+                            {/* Bar */}
+                            <div
+                                className={`w-full max-w-[44px] rounded-t-xl ${
+                                    isToday 
+                                        ? 'bg-gradient-to-t from-accent-gold/70 via-accent-gold to-accent-gold shadow-[0_-4px_20px_rgba(212,175,55,0.25)]' 
+                                        : d.total > 0
+                                            ? 'bg-gradient-to-t from-gray-700 via-gray-600 to-gray-500 group-hover:from-accent-gold/30 group-hover:via-accent-gold/20 group-hover:to-accent-gold/10'
+                                            : 'bg-gray-800/50'
+                                }`}
+                                style={{ 
+                                    height: `${barHeight}px`,
+                                    transition: `height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 100}ms`,
+                                }}
+                            />
+                            {/* Label */}
+                            <span className={`text-[10px] font-bold mt-2 ${isToday ? 'text-accent-gold' : 'text-gray-500'}`}>
+                                {d.label}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
         </div>
     );
 }

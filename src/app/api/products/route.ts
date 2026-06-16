@@ -37,10 +37,20 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.storeId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { name, price, stock, isFormula, formulaItems } = await req.json();
+    const { name, price, purchasePrice, stock, isFormula, formulaItems, code } = await req.json();
     const storeId = session.user.storeId;
 
     try {
+        // Validasi duplikasi barcode dalam satu toko sebelum menyimpan
+        if (code && code.trim() !== '') {
+            const existingProduct = await prisma.product.findFirst({
+                where: { storeId, code: code.trim() }
+            });
+            if (existingProduct) {
+                return NextResponse.json({ error: 'Kode / Barcode sudah digunakan oleh produk lain di toko ini.' }, { status: 400 });
+            }
+        }
+
         const product = await prisma.$transaction(async (tx) => {
             let totalStock = parseFloat(stock);
 
@@ -69,9 +79,11 @@ export async function POST(req: Request) {
                 data: {
                     name,
                     price: parseFloat(price),
+                    purchasePrice: parseFloat(purchasePrice) || 0,
                     stock: totalStock,
                     isFormula,
-                    storeId
+                    storeId,
+                    code: code && code.trim() !== '' ? code.trim() : null
                 }
             });
 
@@ -97,6 +109,9 @@ export async function POST(req: Request) {
         return NextResponse.json(product);
     } catch (error: any) {
         console.error("POST Product Error:", error);
+        if (error.code === 'P2002') {
+            return NextResponse.json({ error: 'Kode / Barcode sudah digunakan oleh produk lain di toko ini.' }, { status: 400 });
+        }
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

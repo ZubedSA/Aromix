@@ -12,7 +12,7 @@ export default function IngredientsPage() {
     const [selectedIngredient, setSelectedIngredient] = useState<any>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [formData, setFormData] = useState({ name: '', unit: 'ml', stock: '0', type: 'BIANG', price: '0' });
+    const [formData, setFormData] = useState({ name: '', unit: 'ml', stock: '0', type: 'BIANG', price: '0', purchasePrice: '0' });
     const [activeTab, setActiveTab] = useState('BIANG');
 
     useEffect(() => {
@@ -34,7 +34,7 @@ export default function IngredientsPage() {
 
     const handleOpenAdd = () => {
         setSelectedIngredient(null);
-        setFormData({ name: '', unit: activeTab === 'BOTOL' ? 'pcs' : 'ml', stock: '0', type: activeTab, price: '0' });
+        setFormData({ name: '', unit: activeTab === 'BOTOL' ? 'pcs' : 'ml', stock: '0', type: activeTab, price: '0', purchasePrice: '0' });
         setIsModalOpen(true);
     };
 
@@ -45,7 +45,8 @@ export default function IngredientsPage() {
             unit: ingredient.unit,
             stock: ingredient.stock.toString(),
             type: ingredient.type,
-            price: ingredient.price?.toString() || '0'
+            price: ingredient.price?.toString() || '0',
+            purchasePrice: ingredient.purchasePrice?.toString() || '0'
         });
         setIsModalOpen(true);
     };
@@ -328,7 +329,7 @@ export default function IngredientsPage() {
                                         <option value="drop">drop</option>
                                     </select>
                                 </div>
-                                <div>
+                                <div className="col-span-2">
                                     <label className="block text-sm text-gray-400 mb-1">Stok Saat Ini</label>
                                     <input
                                         type="number"
@@ -337,6 +338,16 @@ export default function IngredientsPage() {
                                         className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-accent-gold"
                                         value={formData.stock}
                                         onChange={e => setFormData({ ...formData, stock: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-1">Harga Beli / HPP (Rp)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-accent-gold"
+                                        value={formData.purchasePrice}
+                                        onChange={e => setFormData({ ...formData, purchasePrice: e.target.value })}
                                     />
                                 </div>
                                 <div>

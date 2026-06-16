@@ -11,7 +11,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { items, customerId } = await req.json();
+        const { items, customerId, paymentMethod } = await req.json();
 
         if (!items || !Array.isArray(items) || items.length === 0) {
             return NextResponse.json({ error: 'Item transaksi tidak valid.' }, { status: 400 });
@@ -21,7 +21,8 @@ export async function POST(req: Request) {
             session.user.storeId,
             session.user.name || 'Kasir',
             items,
-            customerId
+            customerId,
+            paymentMethod
         );
 
         return NextResponse.json(result);

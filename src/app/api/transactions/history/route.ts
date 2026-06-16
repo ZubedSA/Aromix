@@ -9,7 +9,15 @@ export async function GET() {
 
     const transactions = await prisma.transaction.findMany({
         where: { storeId: session.user.storeId },
-        include: { items: { include: { product: true } } },
+        include: {
+            customer: true,
+            items: {
+                include: {
+                    product: true,
+                    ingredient: true
+                }
+            }
+        },
         orderBy: { createdAt: 'desc' },
         take: 50
     });

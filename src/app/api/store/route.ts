@@ -24,10 +24,17 @@ export async function PUT(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const data = await req.json();
+        const body = await req.json();
+        // Only allow valid fields to be updated
+        const data: { name?: string; address?: string; phone?: string } = {};
+        if (body.name !== undefined) data.name = body.name;
+        if (body.address !== undefined) data.address = body.address;
+        if (body.phone !== undefined) data.phone = body.phone;
+
         const updated = await StoreService.updateStoreProfile(session.user.storeId, data);
         return NextResponse.json(updated);
     } catch (error: any) {
+        console.error('[API /store PUT]:', error);
         return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }

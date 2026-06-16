@@ -11,11 +11,16 @@ export async function GET() {
         }
 
         const profile = await StoreService.getUserProfile(session.user.id);
+        if (!profile) {
+            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }
         return NextResponse.json(profile);
     } catch (error: any) {
+        console.error('[API /profile GET]:', error);
         return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }
+
 
 export async function PUT(req: Request) {
     try {
@@ -24,10 +29,15 @@ export async function PUT(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const data = await req.json();
+        const body = await req.json();
+        const data: { name?: string; email?: string } = {};
+        if (body.name !== undefined) data.name = body.name;
+        if (body.email !== undefined) data.email = body.email;
+
         const updated = await StoreService.updateUserProfile(session.user.id, data);
         return NextResponse.json(updated);
     } catch (error: any) {
+        console.error('[API /profile PUT]:', error);
         return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }
