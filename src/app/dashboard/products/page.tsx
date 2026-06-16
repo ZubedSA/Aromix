@@ -1,12 +1,19 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import useSWR from 'swr';
 import { Plus, Search, Package, Edit2, Trash2, Beaker, X, AlertCircle, ShoppingBag, Eye } from 'lucide-react';
 
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
 export default function ProductsPage() {
-    const [products, setProducts] = useState<any[]>([]);
-    const [ingredients, setIngredients] = useState<any[]>([]);
-    const [allProducts, setAllProducts] = useState<any[]>([]);
+    const { data: prodData, mutate: mutateProducts } = useSWR('/api/products', fetcher);
+    const { data: ingData } = useSWR('/api/ingredients', fetcher);
+
+    const products: any[] = prodData || [];
+    const allProducts: any[] = prodData || [];
+    const ingredients: any[] = ingData || [];
+
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -23,22 +30,6 @@ export default function ProductsPage() {
         code: ''
     };
     const [formData, setFormData] = useState(initialForm);
-
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
-        const [prodRes, ingRes] = await Promise.all([
-            fetch('/api/products'),
-            fetch('/api/ingredients')
-        ]);
-        const prodData = await prodRes.json();
-        const ingData = await ingRes.json();
-        setProducts(prodData);
-        setAllProducts(prodData);
-        setIngredients(ingData);
-    };
 
     const handleOpenAdd = () => {
         setSelectedProduct(null);
@@ -109,7 +100,7 @@ export default function ProductsPage() {
                 return;
             }
             setIsModalOpen(false);
-            fetchData();
+            mutateProducts();
         } catch (error) {
             console.error(error);
         } finally {
@@ -123,7 +114,7 @@ export default function ProductsPage() {
         try {
             await fetch(`/api/products/${selectedProduct.id}`, { method: 'DELETE' });
             setIsDeleteModalOpen(false);
-            fetchData();
+            mutateProducts();
         } catch (error) {
             console.error(error);
         } finally {

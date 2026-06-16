@@ -54,6 +54,29 @@ export async function POST(req: Request) {
             return user;
         });
 
+        // --- TELEGRAM NOTIFICATION ---
+        try {
+            const botToken = process.env.TELEGRAM_BOT_TOKEN;
+            const chatId = process.env.TELEGRAM_CHAT_ID;
+
+            if (botToken && chatId) {
+                const message = `*📢 PENDAFTARAN MITRA BARU*\n\n🏢 *Brand:* ${storeName}\n👤 *Pemilik:* ${name}\n📧 *Email:* ${email}\n📅 *Waktu:* ${new Date().toLocaleString('id-ID')}\n\nMohon segera review dan aktivasi akun ini di dashboard admin. http:aromix.my.id`;
+
+                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: message,
+                        parse_mode: 'Markdown'
+                    })
+                });
+            }
+        } catch (err) {
+            console.error("Gagal mengirim notifikasi Telegram:", err);
+        }
+        // -----------------------------
+
         return NextResponse.json({ success: true, userId: result.id });
     } catch (error: any) {
         console.error("Registration error:", error);

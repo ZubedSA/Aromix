@@ -41,8 +41,8 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative overflow-hidden">
             {/* Back to Landing Page Button */}
-            <Link 
-                href="/" 
+            <Link
+                href="/"
                 className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2.5 bg-surface/50 backdrop-blur-md border border-border rounded-full text-xs font-bold text-gray-400 hover:text-white hover:border-accent-gold/40 transition-all z-20 shadow-lg"
             >
                 <ArrowLeft size={14} />
@@ -74,7 +74,7 @@ export default function LoginPage() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full bg-background border border-border rounded-2xl py-4 pl-12 pr-4 focus:border-accent-gold outline-none transition-all placeholder:text-gray-600"
-                                    placeholder="owner@aromix.id"
+                                    placeholder="Masukkan Email anda"
                                 />
                             </div>
                         </div>

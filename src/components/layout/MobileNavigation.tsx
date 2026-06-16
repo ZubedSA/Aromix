@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import {
     LayoutDashboard,
     ShoppingCart,
@@ -12,7 +12,8 @@ import {
     Settings,
     Users,
     Briefcase,
-    Database
+    Database,
+    LogOut
 } from 'lucide-react';
 
 export default function MobileNavigation() {
@@ -39,6 +40,7 @@ export default function MobileNavigation() {
         { label: 'Users', icon: Users, href: '/dashboard/admin/users' },
         { label: 'Backup', icon: Database, href: '/dashboard/admin/backup' },
         { label: 'Pengaturan', icon: Settings, href: '/dashboard/settings' },
+        { label: 'Keluar', icon: LogOut, action: 'logout' },
     ];
 
     const cashierItems = [
@@ -60,12 +62,29 @@ export default function MobileNavigation() {
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/90 backdrop-blur-xl border-t border-white/5 px-3 py-2.5 z-50 flex justify-between items-center shadow-2xl">
             {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href;
+                const isActive = pathname === (item as any).href;
+
+                if ((item as any).action === 'logout') {
+                    return (
+                        <button
+                            key="logout"
+                            onClick={() => signOut({ callbackUrl: '/login' })}
+                            className="flex flex-col items-center gap-1 transition-all text-gray-500 hover:text-red-500"
+                        >
+                            <div className="p-1 rounded-xl">
+                                <Icon size={20} strokeWidth={2} />
+                            </div>
+                            <span className="text-[9px] font-bold uppercase tracking-tighter">
+                                {item.label}
+                            </span>
+                        </button>
+                    );
+                }
 
                 return (
                     <Link
-                        key={item.href}
-                        href={item.href}
+                        key={(item as any).href}
+                        href={(item as any).href}
                         className={`flex flex-col items-center gap-1 transition-all ${isActive ? 'text-accent-gold scale-110' : 'text-gray-500'
                             }`}
                     >

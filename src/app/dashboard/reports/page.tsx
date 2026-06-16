@@ -1,7 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import useSWR from 'swr';
 import { BarChart3, TrendingUp, TrendingDown, Package, ShoppingBag, Calendar, Download, FileText } from 'lucide-react';
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function ReportsPage() {
     const getPastDateString = (daysAgo: number) => {
@@ -15,31 +18,14 @@ export default function ReportsPage() {
 
     const [startDate, setStartDate] = useState(getPastDateString(6));
     const [endDate, setEndDate] = useState(getPastDateString(0));
-    const [reportData, setReportData] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() => {
-        fetchReports();
-    }, [startDate, endDate]);
+    const { data: reportData, isLoading, isValidating } = useSWR(
+        `/api/reports?startDate=${startDate}&endDate=${endDate}`,
+        fetcher
+    );
 
-    const fetchReports = async () => {
-        if (!reportData) {
-            setLoading(true);
-        } else {
-            setRefreshing(true);
-        }
-        try {
-            const res = await fetch(`/api/reports?startDate=${startDate}&endDate=${endDate}`);
-            const data = await res.json();
-            setReportData(data);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
-        }
-    };
+    const loading = isLoading;
+    const refreshing = isValidating;
 
     const exportToCSV = () => {
         const transactions = reportData?.transactions || [];
