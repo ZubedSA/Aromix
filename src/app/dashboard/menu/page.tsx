@@ -50,42 +50,42 @@ export default function MenuKatalogPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-8">
                 {filteredProducts.map((product) => (
-                    <div key={product.id} className="glass-panel group rounded-[2.5rem] overflow-hidden hover:border-accent-gold/50 transition-all duration-500">
+                    <div key={product.id} className="glass-panel group rounded-3xl sm:rounded-[2.5rem] overflow-hidden hover:border-accent-gold/50 transition-all duration-500">
                         {/* Fake Image Placeholder with Gradient */}
-                        <div className="h-48 bg-gradient-to-br from-surface to-background flex items-center justify-center relative overflow-hidden">
+                        <div className="h-36 sm:h-48 bg-gradient-to-br from-surface to-background flex items-center justify-center relative overflow-hidden">
                             <div className="absolute inset-0 bg-accent-gold/5 group-hover:bg-accent-gold/10 transition-colors" />
-                            <Droplets size={64} className="text-accent-gold/20 group-hover:scale-110 group-hover:text-accent-gold/40 transition-all duration-700" />
-                            <div className="absolute top-4 right-4 bg-background/80 backdrop-blur-md px-3 py-1 rounded-full border border-border flex items-center gap-1">
-                                <Star size={12} className="text-accent-gold fill-accent-gold" />
-                                <span className="text-[10px] font-bold text-white">PREMIUM</span>
+                            <Droplets size={48} className="text-accent-gold/20 group-hover:scale-110 group-hover:text-accent-gold/40 transition-all duration-700 sm:size-[64px]" />
+                            <div className="absolute top-3 right-3 bg-background/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-border flex items-center gap-1">
+                                <Star size={10} className="text-accent-gold fill-accent-gold" />
+                                <span className="text-[9px] font-bold text-white">PREMIUM</span>
                             </div>
                         </div>
 
-                        <div className="p-8">
-                            <div className="flex justify-between items-start mb-4">
-                                <h3 className="text-xl font-bold break-words pr-2">{product.name}</h3>
+                        <div className="p-5 sm:p-8">
+                            <div className="flex justify-between items-start mb-3">
+                                <h3 className="text-lg sm:text-xl font-bold break-words pr-2 text-white">{product.name}</h3>
                             </div>
 
-                            <div className="flex items-center gap-2 mb-6">
-                                <span className="text-xs font-black tracking-widest text-gray-500 uppercase">Aroma</span>
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="text-[10px] font-black tracking-widest text-gray-500 uppercase">Aroma</span>
                                 <div className="flex-1 h-[1px] bg-border/50" />
                             </div>
 
-                            <p className="text-gray-400 text-sm mb-8 line-clamp-2 italic">
+                            <p className="text-gray-400 text-xs sm:text-sm mb-6 line-clamp-2 italic">
                                 "{product.isFormula ? 'Racikan eksklusif dengan komposisi bahan pilihan yang menghasilkan aroma tahan lama.' : 'Parfum siap pakai dengan karakter aroma yang kuat dan elegan.'}"
                             </p>
 
                             <div className="flex items-center justify-between mt-auto">
                                 <div>
-                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Harga Satuan</p>
-                                    <p className="text-2xl font-black text-accent-emerald tracking-tighter">
+                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Harga Satuan</p>
+                                    <p className="text-xl sm:text-2xl font-black text-accent-emerald tracking-tighter">
                                         Rp {parseFloat(product.price).toLocaleString('id-ID')}
                                     </p>
                                 </div>
-                                <button className="w-12 h-12 bg-foreground text-background rounded-2xl flex items-center justify-center hover:bg-accent-gold transition-all shadow-premium group-hover:rotate-12">
-                                    <ChevronRight size={24} />
+                                <button className="w-11 h-11 sm:w-12 sm:h-12 bg-foreground text-background rounded-2xl flex items-center justify-center hover:bg-accent-gold transition-all shadow-premium group-hover:rotate-12 min-h-[44px] min-w-[44px]">
+                                    <ChevronRight size={20} />
                                 </button>
                             </div>
                         </div>

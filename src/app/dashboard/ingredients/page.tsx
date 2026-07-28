@@ -112,9 +112,9 @@ export default function IngredientsPage() {
                 </div>
             </header>
 
-            {/* Tabs & Search */}
-            <div className="flex flex-col md:flex-row gap-6 mb-8">
-                <div className="flex overflow-x-auto no-scrollbar bg-surface p-1 rounded-2xl border border-border max-w-full flex-nowrap">
+            {/* Category Tabs & Search Bar */}
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="flex bg-surface/50 border border-border/80 p-1.5 rounded-2xl overflow-x-auto no-scrollbar gap-1.5 shrink-0 scroll-smooth">
                     {[
                         { id: 'BIANG', label: 'Biang Parfum' },
                         { id: 'ALCOHOL', label: 'Alkohol' },
@@ -125,9 +125,9 @@ export default function IngredientsPage() {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all shrink-0 ${activeTab === tab.id
+                            className={`px-4 sm:px-6 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all shrink-0 min-h-[44px] flex items-center justify-center whitespace-nowrap ${activeTab === tab.id
                                 ? 'bg-foreground text-background shadow-lg'
-                                : 'text-gray-500 hover:text-white'
+                                : 'text-gray-400 hover:text-white bg-surface/30 md:bg-transparent'
                                 }`}
                         >
                             {tab.label}
@@ -135,12 +135,12 @@ export default function IngredientsPage() {
                     ))}
                 </div>
 
-                <div className="relative flex-1 max-w-md">
+                <div className="relative flex-1 max-w-full md:max-w-md">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                     <input
                         type="text"
                         placeholder={`Cari di ${activeTab === 'BIANG' ? 'Biang' : activeTab}...`}
-                        className="w-full bg-surface border border-border rounded-xl py-2.5 pl-12 pr-4 outline-none focus:border-accent-gold transition-all text-sm"
+                        className="w-full bg-surface border border-border rounded-xl py-3 pl-12 pr-4 outline-none focus:border-accent-gold transition-all text-xs sm:text-sm min-h-[44px]"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
@@ -278,6 +278,84 @@ export default function IngredientsPage() {
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            {/* Mobile Native Cards Stream View */}
+            <div className="md:hidden space-y-3.5">
+                {activeTab === 'FORMULA_PRODUCT' ? (
+                    products
+                        .filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+                        .map((item) => (
+                            <div key={item.id} className="glass-panel p-4 rounded-2xl border border-border/80 space-y-3 shadow-sm">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="p-2.5 bg-background border border-border rounded-xl shrink-0">
+                                            <Package className="text-accent-gold" size={20} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="font-bold text-sm text-white truncate">{item.name}</p>
+                                            <p className="text-xs text-accent-gold font-semibold">
+                                                Rp {parseFloat(item.price || 0).toLocaleString('id-ID')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold shrink-0 ${
+                                        item.stock < 10 ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                    }`}>
+                                        Stok: {item.stock} {item.isFormula ? 'ml' : 'pcs'}
+                                    </span>
+                                </div>
+                            </div>
+                        ))
+                ) : (
+                    ingredients
+                        .filter(i => (i.type === activeTab) && i.name.toLowerCase().includes(search.toLowerCase()))
+                        .map((item) => (
+                            <div key={item.id} className="glass-panel p-4 rounded-2xl border border-border/80 space-y-3 shadow-sm">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="p-2.5 bg-background border border-border rounded-xl shrink-0">
+                                            <Droplets className="text-accent-gold" size={20} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="font-bold text-sm text-white truncate">{item.name}</p>
+                                            <p className="text-xs text-accent-gold font-semibold">
+                                                Rp {parseFloat(item.price || 0).toLocaleString('id-ID')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold shrink-0 ${
+                                        item.stock < 100 ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                    }`}>
+                                        Stok: {item.stock} {item.unit}
+                                    </span>
+                                </div>
+
+                                <div className="flex justify-end gap-2 pt-2 border-t border-border/40">
+                                    <button
+                                        onClick={() => handleOpenEdit(item)}
+                                        className="p-2.5 bg-surface border border-border rounded-xl text-gray-300 hover:text-white min-h-[44px] min-w-[44px] flex items-center justify-center text-xs font-semibold gap-1.5 active:scale-95"
+                                    >
+                                        <Edit2 size={16} />
+                                        <span>Edit</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleOpenDelete(item)}
+                                        className="p-2.5 bg-surface border border-border rounded-xl text-red-400 hover:text-red-300 min-h-[44px] min-w-[44px] flex items-center justify-center text-xs font-semibold gap-1.5 active:scale-95"
+                                    >
+                                        <Trash2 size={16} />
+                                        <span>Hapus</span>
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                )}
+
+                {ingredients.length === 0 && products.length === 0 && (
+                    <div className="glass-panel p-10 rounded-2xl text-center text-gray-500 text-sm">
+                        Belum ada data barang atau produk.
+                    </div>
+                )}
             </div>
 
             {/* Modal Add/Edit */}

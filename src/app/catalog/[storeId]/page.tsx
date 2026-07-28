@@ -293,34 +293,34 @@ Apakah pesanan di atas ready untuk dipesan? Terima kasih!`;
                                             {item.stock <= 0 ? (
                                                 <button
                                                     disabled
-                                                    className="w-full py-2.5 bg-surface border border-border/40 rounded-xl font-bold text-[11px] text-gray-500 cursor-not-allowed"
+                                                    className="w-full py-3 bg-surface border border-border/40 rounded-xl font-bold text-xs text-gray-500 cursor-not-allowed min-h-[44px]"
                                                 >
                                                     Stok Habis
                                                 </button>
                                             ) : quantity === 0 ? (
                                                 <button
                                                     onClick={() => addToCart(item)}
-                                                    className="w-full py-2.5 bg-surface hover:bg-accent-gold hover:text-background border border-border hover:border-accent-gold rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                                                    className="w-full py-3 bg-accent-gold/10 hover:bg-accent-gold text-accent-gold hover:text-background border border-accent-gold/30 hover:border-accent-gold rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] min-h-[44px]"
                                                 >
-                                                    <Plus size={12} />
+                                                    <Plus size={16} />
                                                     Tambah ke Keranjang
                                                 </button>
                                             ) : (
-                                                <div className="flex items-center justify-between bg-surface border border-accent-gold/30 rounded-xl overflow-hidden p-1">
+                                                <div className="flex items-center justify-between bg-surface border border-accent-gold/40 rounded-xl overflow-hidden p-1 min-h-[44px]">
                                                     <button
                                                         onClick={() => decrementQuantity(item.id)}
-                                                        className="p-2 hover:bg-accent-gold/10 text-accent-gold hover:text-white rounded-lg transition-colors"
+                                                        className="p-3 text-accent-gold hover:bg-accent-gold/20 rounded-lg transition-colors min-h-[38px] min-w-[38px] flex items-center justify-center"
                                                     >
-                                                        <Minus size={12} />
+                                                        <Minus size={16} />
                                                     </button>
-                                                    <span className="font-bold text-xs text-white px-4">
+                                                    <span className="font-bold text-sm text-white px-4">
                                                         {quantity}
                                                     </span>
                                                     <button
                                                         onClick={() => addToCart(item)}
-                                                        className="p-2 hover:bg-accent-gold/10 text-accent-gold hover:text-white rounded-lg transition-colors"
+                                                        className="p-3 text-accent-gold hover:bg-accent-gold/20 rounded-lg transition-colors min-h-[38px] min-w-[38px] flex items-center justify-center"
                                                     >
-                                                        <Plus size={12} />
+                                                        <Plus size={16} />
                                                     </button>
                                                 </div>
                                             )}

@@ -129,20 +129,20 @@ export default function ProductsPage() {
                     <h1 className="text-3xl font-bold premium-gradient-text">Produk & Katalog</h1>
                     <p className="text-gray-400 mt-1 break-words">Kelola produk jadi, racikan (formula), dan katalog menu untuk pelanggan.</p>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
                     <button
                         onClick={() => window.location.href = '/dashboard/menu'}
-                        className="bg-surface border border-border px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:border-accent-gold/50 transition-all text-sm"
+                        className="bg-surface border border-border px-5 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:border-accent-gold/50 transition-all text-xs sm:text-sm min-h-[44px]"
                     >
                         <Eye size={18} />
-                        Lihat Katalog (Mode Menu)
+                        <span>Lihat Katalog (Mode Menu)</span>
                     </button>
                     <button
                         onClick={handleOpenAdd}
-                        className="bg-foreground text-background px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:bg-accent-gold transition-all text-sm"
+                        className="bg-foreground text-background px-5 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-accent-gold transition-all text-xs sm:text-sm min-h-[44px]"
                     >
-                        <Plus size={20} />
-                        Tambah Produk
+                        <Plus size={18} />
+                        <span>Tambah Produk</span>
                     </button>
                 </div>
             </header>
@@ -161,27 +161,45 @@ export default function ProductsPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6">
                 {products.filter(p => 
                     p.name.toLowerCase().includes(search.toLowerCase()) ||
                     (p.code && p.code.toLowerCase().includes(search.toLowerCase()))
                 ).map((product) => (
-                    <div key={product.id} className="glass-panel p-6 rounded-2xl hover:border-accent-gold/20 transition-all group">
-                        <div className="flex justify-between items-start mb-6">
-                            <div className="bg-background p-3 rounded-xl border border-border group-hover:border-accent-gold/50 transition-all">
-                                <Package className="text-accent-gold" />
+                    <div key={product.id} className="glass-panel p-4 sm:p-6 rounded-2xl border border-border/80 hover:border-accent-gold/40 transition-all space-y-3 shadow-md">
+                        <div className="flex justify-between items-start gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="p-3 bg-background border border-border rounded-xl shrink-0">
+                                    <Package className="text-accent-gold" size={20} />
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase ${
+                                            product.isFormula ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                        }`}>
+                                            {product.isFormula ? 'Racikan (Formula)' : 'Produk Jadi'}
+                                        </span>
+                                        {product.code && (
+                                            <span className="text-[10px] bg-background border border-border px-1.5 py-0.5 rounded font-mono text-gray-400">
+                                                {product.code}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h3 className="font-bold text-base text-white truncate">{product.name}</h3>
+                                </div>
                             </div>
-                            <div className="flex gap-2">
+
+                            <div className="flex gap-1.5 shrink-0">
                                 <button
                                     onClick={() => handleOpenEdit(product)}
-                                    className="p-2.5 bg-surface border border-border rounded-xl text-gray-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                                    className="p-2.5 bg-surface border border-border/70 rounded-xl text-gray-300 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center active:scale-95"
                                     title="Edit"
                                 >
                                     <Edit2 size={16} />
                                 </button>
                                 <button
                                     onClick={() => handleOpenDelete(product)}
-                                    className="p-2.5 bg-surface border border-border rounded-xl text-gray-400 hover:text-red-500 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                                    className="p-2.5 bg-surface border border-border/70 rounded-xl text-gray-300 hover:text-red-500 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center active:scale-95"
                                     title="Hapus"
                                 >
                                     <Trash2 size={16} />
@@ -189,38 +207,36 @@ export default function ProductsPage() {
                             </div>
                         </div>
 
-                        <h3 className="text-xl font-bold mb-1">{product.name}</h3>
-                        <div className="flex gap-2 items-center mb-1">
-                            {product.code && (
-                                <span className="text-[10px] bg-background border border-border px-1.5 py-0.5 rounded font-mono text-gray-400">
-                                    {product.code}
+                        <div className="flex justify-between items-end pt-2 border-t border-border/40">
+                            <div>
+                                <span className="text-[10px] text-gray-500 uppercase tracking-wider block">Harga Jual</span>
+                                <span className="text-base font-bold text-accent-emerald">
+                                    Rp {parseFloat(product.price).toLocaleString('id-ID')}
                                 </span>
-                            )}
-                        </div>
-                        <p className="text-accent-emerald font-semibold mb-4 text-sm">Rp {parseFloat(product.price).toLocaleString('id-ID')}</p>
+                            </div>
 
-                        <div className="flex justify-between items-center pt-4 border-t border-border">
-                            <span className="text-xs text-gray-500 uppercase tracking-wider">Komposisi</span>
-                            <span className="text-xs font-bold text-gray-300">
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                                product.stock <= 0 ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            }`}>
                                 Stok: {product.stock} {product.isFormula ? '(ml)' : ''}
                             </span>
                         </div>
 
                         {product.isFormula && product.formula?.items && (
-                            <div className="mt-3 space-y-2">
+                            <div className="pt-1">
                                 {product.formula.items.length === 0 ? (
-                                    <div className="flex items-center gap-1.5 text-red-500 bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/10 animate-pulse">
+                                    <div className="flex items-center gap-1.5 text-red-400 bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/15">
                                         <AlertCircle size={14} />
                                         <span className="text-[10px] font-bold uppercase tracking-tight">Formula Kosong!</span>
                                     </div>
                                 ) : (
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="flex flex-wrap gap-1.5">
                                         {product.formula.items.slice(0, 3).map((fi: any) => (
-                                            <span key={fi.id} className="text-[10px] bg-background border border-border px-2 py-0.5 rounded text-gray-400">
+                                            <span key={fi.id} className="text-[10px] bg-background/80 border border-border px-2 py-0.5 rounded-md text-gray-300">
                                                 {fi.ingredient?.name || fi.product?.name} {fi.quantity}{fi.ingredient?.unit || 'ml'}
                                             </span>
                                         ))}
-                                        {product.formula.items.length > 3 && <span className="text-[10px] text-gray-600">+{product.formula.items.length - 3} lagi</span>}
+                                        {product.formula.items.length > 3 && <span className="text-[10px] text-gray-500 self-center">+{product.formula.items.length - 3} lagi</span>}
                                     </div>
                                 )}
                             </div>

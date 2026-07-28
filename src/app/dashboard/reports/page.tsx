@@ -120,42 +120,48 @@ export default function ReportsPage() {
                     <p className="text-gray-400 mt-1 break-words">Pantau performa penjualan dan produk terlaris Anda.</p>
                 </div>
                 
-                <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto">
-                    <div className="flex items-center gap-3 bg-surface/40 p-2 rounded-2xl border border-border/60">
-                        <div className="flex items-center gap-2 px-3 py-2 bg-background/50 rounded-xl border border-border">
-                            <Calendar size={16} className="text-accent-gold" />
-                            <input 
-                                type="date" 
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                className="bg-transparent border-none text-sm text-foreground focus:outline-none focus:ring-0 cursor-pointer"
-                            />
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-surface/40 p-2 rounded-2xl border border-border/60">
+                        <div className="flex-1 flex items-center justify-between gap-2 px-3 py-2.5 bg-background/50 rounded-xl border border-border min-h-[44px]">
+                            <span className="text-[10px] text-gray-400 font-bold uppercase sm:hidden">Dari</span>
+                            <div className="flex items-center gap-2">
+                                <Calendar size={16} className="text-accent-gold" />
+                                <input 
+                                    type="date" 
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="bg-transparent border-none text-xs sm:text-sm text-foreground focus:outline-none focus:ring-0 cursor-pointer"
+                                />
+                            </div>
                         </div>
-                        <span className="text-gray-500 font-bold text-xs uppercase">s/d</span>
-                        <div className="flex items-center gap-2 px-3 py-2 bg-background/50 rounded-xl border border-border">
-                            <Calendar size={16} className="text-accent-gold" />
-                            <input 
-                                type="date" 
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                className="bg-transparent border-none text-sm text-foreground focus:outline-none focus:ring-0 cursor-pointer"
-                                min={startDate}
-                            />
+                        <span className="text-gray-500 font-bold text-xs uppercase text-center hidden sm:inline">s/d</span>
+                        <div className="flex-1 flex items-center justify-between gap-2 px-3 py-2.5 bg-background/50 rounded-xl border border-border min-h-[44px]">
+                            <span className="text-[10px] text-gray-400 font-bold uppercase sm:hidden">Sampai</span>
+                            <div className="flex items-center gap-2">
+                                <Calendar size={16} className="text-accent-gold" />
+                                <input 
+                                    type="date" 
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="bg-transparent border-none text-xs sm:text-sm text-foreground focus:outline-none focus:ring-0 cursor-pointer"
+                                    min={startDate}
+                                />
+                            </div>
                         </div>
                     </div>
 
                     <button
                         onClick={exportToCSV}
                         disabled={transactions.length === 0}
-                        className="bg-surface border border-border px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:border-accent-gold/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-surface border border-border px-5 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:border-accent-gold/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm min-h-[44px] shrink-0"
                     >
-                        <Download size={20} />
-                        Ekspor Laporan
+                        <Download size={18} />
+                        <span>Ekspor Laporan</span>
                     </button>
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6 mb-8">
                 <SummaryCard
                     title="Total Omzet"
                     value={`Rp ${totalOmzet.toLocaleString('id-ID')}`}
@@ -178,19 +184,19 @@ export default function ReportsPage() {
                 />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="glass-panel p-8 rounded-2xl">
-                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                <div className="glass-panel p-5 sm:p-8 rounded-2xl">
+                    <h3 className="text-lg sm:text-xl font-bold mb-6 flex items-center gap-2">
                         <Calendar size={20} className="text-accent-gold" />
                         Tren Penjualan Harian
                     </h3>
-                    <div className="h-64 flex items-end justify-between gap-2 overflow-x-auto pb-2 min-w-full">
+                    <div className="h-64 flex items-end justify-between gap-2 overflow-x-auto pb-2 min-w-full no-scrollbar">
                         {reportData?.dailySales?.map((day: any, idx: number) => {
                             const salesValues = reportData?.dailySales?.map((d: any) => parseFloat(d._sum.totalAmount || 0)) || [];
                             const max = salesValues.length > 0 ? Math.max(...salesValues) : 0;
                             const height = max > 0 ? (parseFloat(day._sum.totalAmount) / max) * 100 : 0;
                             return (
-                                <div key={idx} className="flex-1 flex flex-col items-center gap-2 group min-w-[40px] h-full">
+                                <div key={idx} className="flex-1 flex flex-col items-center gap-2 group min-w-[36px] h-full">
                                     <div className="flex-1 w-full flex items-end relative">
                                         <div 
                                             className="w-full bg-accent-gold/20 rounded-t-lg group-hover:bg-accent-gold/40 transition-all relative" 
@@ -206,51 +212,52 @@ export default function ReportsPage() {
                             );
                         })}
                         {(!reportData?.dailySales || reportData.dailySales.length === 0) && (
-                            <div className="w-full h-full flex items-center justify-center text-gray-600 italic">Belum ada data penjualan pada rentang tanggal ini</div>
+                            <div className="w-full h-full flex items-center justify-center text-gray-600 italic text-xs">Belum ada data penjualan pada rentang tanggal ini</div>
                         )}
                     </div>
                 </div>
 
-                <div className="glass-panel p-8 rounded-2xl">
-                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <div className="glass-panel p-5 sm:p-8 rounded-2xl">
+                    <h3 className="text-lg sm:text-xl font-bold mb-6 flex items-center gap-2">
                         <ShoppingBag size={20} className="text-accent-gold" />
                         5 Produk Terlaris
                     </h3>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         {reportData?.topProducts?.map((product: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-4 p-3 bg-surface/50 rounded-xl border border-border/50">
-                                <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center font-bold text-accent-gold border border-border">{idx + 1}</div>
-                                <div className="flex-1">
-                                    <p className="font-bold">{product.name}</p>
-                                    <p className="text-xs text-gray-500">{product._sum.quantity} unit terjual</p>
+                            <div key={idx} className="flex items-center gap-3.5 p-3 bg-surface/50 rounded-xl border border-border/50">
+                                <div className="w-8 h-8 shrink-0 rounded-full bg-background flex items-center justify-center font-bold text-accent-gold border border-border text-xs">{idx + 1}</div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-sm text-white truncate">{product.name}</p>
+                                    <p className="text-xs text-gray-400">{product._sum.quantity} unit terjual</p>
                                 </div>
-                                <div className="text-right">
+                                <div className="text-right shrink-0">
                                     <p className="text-sm font-bold text-accent-emerald">Rp {parseFloat(product._sum.subtotal).toLocaleString('id-ID')}</p>
                                 </div>
                             </div>
                         ))}
                         {(!reportData?.topProducts || reportData.topProducts.length === 0) && (
-                            <div className="py-10 text-center text-gray-600 italic">Belum ada data produk terjual pada rentang tanggal ini</div>
+                            <div className="py-10 text-center text-gray-600 italic text-xs">Belum ada data produk terjual pada rentang tanggal ini</div>
                         )}
                     </div>
                 </div>
             </div>
 
-            <div className="glass-panel p-6 sm:p-8 rounded-2xl mt-10">
+            <div className="glass-panel p-5 sm:p-8 rounded-2xl mt-8">
                 <div className="flex justify-between items-center mb-6">
                     <div>
-                        <h3 className="text-xl font-bold flex items-center gap-2">
+                        <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2">
                             <FileText size={20} className="text-accent-gold" />
                             Rincian Transaksi & Margin Keuntungan
                         </h3>
-                        <p className="text-xs text-gray-500 mt-1">Daftar lengkap transaksi dalam rentang tanggal yang dipilih.</p>
+                        <p className="text-xs text-gray-400 mt-1">Daftar lengkap transaksi dalam rentang tanggal yang dipilih.</p>
                     </div>
                     {refreshing && (
                         <span className="text-xs text-accent-gold animate-pulse">Memperbarui...</span>
                     )}
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full border-collapse text-left text-sm">
                         <thead>
                             <tr className="border-b border-border/80 text-gray-400">
@@ -331,6 +338,85 @@ export default function ReportsPage() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Cards Stream View */}
+                <div className="md:hidden space-y-3.5">
+                    {transactions.map((tx: any) => {
+                        const omzet = parseFloat(tx.totalAmount);
+                        const hpp = tx.items.reduce((sum: number, item: any) => {
+                            const itemPurchasePrice = parseFloat(item.purchasePrice || 0) > 0 
+                                ? parseFloat(item.purchasePrice) 
+                                : (parseFloat(item.product?.purchasePrice || 0) || parseFloat(item.ingredient?.purchasePrice || 0));
+                            return sum + (itemPurchasePrice * item.quantity);
+                        }, 0);
+                        const laba = omzet - hpp;
+                        const margin = omzet > 0 ? (laba / omzet) * 100 : 0;
+
+                        return (
+                            <div key={tx.id} className="glass-panel p-4 rounded-2xl border border-border/80 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-mono text-xs font-bold text-accent-gold">{tx.invoiceNumber}</p>
+                                        <p className="text-[11px] text-gray-400 mt-0.5">
+                                            {new Date(tx.createdAt).toLocaleDateString('id-ID', {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })} • {tx.customer?.name || "Umum"}
+                                        </p>
+                                    </div>
+                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                        tx.paymentMethod === 'TUNAI' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' :
+                                        tx.paymentMethod === 'TRANSFER' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' :
+                                        tx.paymentMethod === 'QRIS' ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20' :
+                                        'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                                    }`}>
+                                        {tx.paymentMethod || 'TUNAI'}
+                                    </span>
+                                </div>
+
+                                <div className="text-xs text-gray-400 bg-background/60 p-2.5 rounded-xl border border-border/50">
+                                    <span className="text-[10px] text-gray-500 uppercase block font-bold mb-0.5">Item Terjual</span>
+                                    {tx.items.map((item: any) => {
+                                        const name = item.product?.name || item.ingredient?.name || "Item";
+                                        return `${name} (x${item.quantity})`;
+                                    }).join(", ")}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/40 text-xs">
+                                    <div className="bg-surface/50 p-2.5 rounded-xl border border-border/40">
+                                        <span className="text-[10px] text-gray-500 uppercase block font-medium">Omzet</span>
+                                        <span className="font-bold text-gray-200">Rp {omzet.toLocaleString('id-ID')}</span>
+                                    </div>
+                                    <div className="bg-surface/50 p-2.5 rounded-xl border border-border/40">
+                                        <span className="text-[10px] text-gray-500 uppercase block font-medium">Total HPP</span>
+                                        <span className="font-medium text-gray-400">Rp {hpp.toLocaleString('id-ID')}</span>
+                                    </div>
+                                    <div className="bg-surface/50 p-2.5 rounded-xl border border-border/40 col-span-2 flex justify-between items-center">
+                                        <div>
+                                            <span className="text-[10px] text-gray-500 uppercase block font-medium">Laba Bersih</span>
+                                            <span className={`font-bold ${laba >= 0 ? 'text-accent-emerald' : 'text-rose-400'}`}>
+                                                Rp {laba.toLocaleString('id-ID')}
+                                            </span>
+                                        </div>
+                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
+                                            laba >= 0 ? 'bg-emerald-500/10 text-accent-emerald border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                        }`}>
+                                            Margin {margin.toFixed(1)}%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {transactions.length === 0 && (
+                        <div className="glass-panel p-10 rounded-2xl text-center text-gray-500 italic text-sm">
+                            Tidak ada transaksi dalam periode ini.
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

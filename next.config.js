@@ -5,6 +5,7 @@ const nextConfig = {
     compress: true,
     experimental: {
         optimizePackageImports: ['lucide-react', 'framer-motion'],
+        serverComponentsExternalPackages: ['@neondatabase/serverless', 'ws', '@prisma/adapter-neon'],
     },
 };
 
