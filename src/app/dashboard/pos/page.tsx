@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import useSWR, { useSWRConfig } from 'swr';
 import {
     Search,
     ShoppingCart,
@@ -17,12 +18,27 @@ import {
     MessageSquare
 } from 'lucide-react';
 
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
 // Product logic
 export default function POSPage() {
-    const [products, setProducts] = useState<any[]>([]);
-    const [resources, setResources] = useState<any[]>([]);
+    const { mutate } = useSWRConfig();
+    const { data: posData, isLoading: isPosLoading } = useSWR('/api/pos/init', fetcher, {
+        revalidateOnFocus: false,
+        dedupingInterval: 10000,
+    });
+
+    const products = posData?.products || [];
+    const resources = posData?.ingredients || [];
     const [customers, setCustomers] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (posData?.customers) {
+            setCustomers(posData.customers);
+        }
+    }, [posData?.customers]);
     const [cart, setCart] = useState<any[]>([]);
+    const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
     const [search, setSearch] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [successModal, setSuccessModal] = useState({
@@ -205,7 +221,7 @@ export default function POSPage() {
 
     const handleAddBottle = () => {
         if (!selectedBottleId) return;
-        const bottleResource = resources.find(r => r.id === selectedBottleId);
+        const bottleResource = resources.find((r: any) => r.id === selectedBottleId);
         if (!bottleResource) return;
 
         const existing = purchasedBottles.find(b => b.id === selectedBottleId);
@@ -233,10 +249,6 @@ export default function POSPage() {
     };
 
     useEffect(() => {
-        fetchProducts();
-        fetchResources();
-        fetchCustomers();
-
         const savedReceipt = localStorage.getItem('aromix_receipt_settings');
         if (savedReceipt) {
             try { setReceiptSettings(JSON.parse(savedReceipt)); } catch (e) {}
@@ -246,24 +258,6 @@ export default function POSPage() {
             try { setWaSettings(JSON.parse(savedWa)); } catch (e) {}
         }
     }, []);
-
-    const fetchResources = async () => {
-        const res = await fetch('/api/ingredients');
-        const data = await res.json();
-        setResources(data);
-    };
-
-    const fetchProducts = async () => {
-        const res = await fetch('/api/products');
-        const data = await res.json();
-        setProducts(data);
-    };
-
-    const fetchCustomers = async () => {
-        const res = await fetch('/api/customers');
-        const data = await res.json();
-        setCustomers(data);
-    };
 
     const handleAddCustomer = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -351,7 +345,8 @@ export default function POSPage() {
                 setPurchasedBottles([]);
                 setIsOwnBottleGlobal(false);
                 setSelectedCustomer(null);
-                fetchProducts(); // Refresh stock
+                setIsMobileCartOpen(false);
+                mutate('/api/pos/init'); // Refresh cache instantly
             } else {
                 setSuccessModal({
                     isOpen: true,
@@ -482,7 +477,7 @@ export default function POSPage() {
                                     e.preventDefault();
                                     const query = search.trim().toLowerCase();
                                     if (!query) return;
-                                    const matched = products.find(p => p.code && p.code.trim().toLowerCase() === query);
+                                    const matched = products.find((p: any) => p.code && p.code.trim().toLowerCase() === query);
                                     if (matched) {
                                         addToCart({ ...matched, price: parseFloat(matched.price) });
                                         setSearch('');
@@ -495,9 +490,9 @@ export default function POSPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                     {[
-                        ...products.map(p => ({ ...p, price: parseFloat(p.price) })),
-                        ...resources.filter(r => parseFloat(r.price) > 0).map(r => ({ ...r, price: parseFloat(r.price), isIngredient: true }))
-                    ].filter(p => 
+                        ...products.map((p: any) => ({ ...p, price: parseFloat(p.price) })),
+                        ...resources.filter((r: any) => parseFloat(r.price) > 0).map((r: any) => ({ ...r, price: parseFloat(r.price), isIngredient: true }))
+                    ].filter((p: any) => 
                         p.name.toLowerCase().includes(search.toLowerCase()) ||
                         (p.code && p.code.toLowerCase().includes(search.toLowerCase()))
                     ).map(item => (
@@ -533,8 +528,35 @@ export default function POSPage() {
                 </div>
             </div>
 
+            {/* Mobile Sticky Floating Cart Bar */}
+            {(cart.length > 0 || purchasedBottles.length > 0) && (
+                <div className="lg:hidden fixed bottom-14 left-0 right-0 p-3 bg-surface/95 backdrop-blur-xl border-t border-accent-gold/30 z-40 shadow-2xl animate-in slide-in-from-bottom duration-200">
+                    <div className="flex justify-between items-center gap-3">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                {cart.length + purchasedBottles.length} Item Terpilih
+                            </span>
+                            <span className="text-lg font-black text-accent-gold">
+                                Rp {total.toLocaleString('id-ID')}
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => setIsMobileCartOpen(true)}
+                            className="bg-accent-gold text-black px-5 py-3 rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg min-h-[44px]"
+                        >
+                            <ShoppingCart size={16} />
+                            Lihat Keranjang
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Cart / Checkout Area */}
-            <div className="w-full lg:w-[400px] glass-panel border-l-0 lg:border-l border-border flex flex-col">
+            <div className={`w-full lg:w-[400px] glass-panel border-l-0 lg:border-l border-border flex flex-col ${
+                isMobileCartOpen 
+                    ? 'fixed inset-0 z-50 bg-background/95 backdrop-blur-2xl animate-in slide-in-from-bottom duration-200 overflow-y-auto' 
+                    : 'hidden lg:flex'
+            }`}>
                 <div className="p-6 border-b border-border flex justify-between items-center">
                     <div className="flex flex-col">
                         <h2 className="text-xl font-bold flex items-center gap-2">
@@ -547,9 +569,17 @@ export default function POSPage() {
                             </span>
                         )}
                     </div>
-                    <span className="bg-accent-gold text-black text-xs font-bold px-2 py-1 rounded-md">
-                        {cart.length + purchasedBottles.length} ITEM
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className="bg-accent-gold text-black text-xs font-bold px-2 py-1 rounded-md">
+                            {cart.length + purchasedBottles.length} ITEM
+                        </span>
+                        <button
+                            onClick={() => setIsMobileCartOpen(false)}
+                            className="lg:hidden p-2 text-gray-400 hover:text-white rounded-xl hover:bg-surface transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Opsi Wadah / Botol */}
@@ -581,7 +611,7 @@ export default function POSPage() {
                                     onChange={(e) => setSelectedBottleId(e.target.value)}
                                 >
                                     <option value="">Pilih Botol...</option>
-                                    {resources.filter(r => r.type === 'BOTOL').map(r => (
+                                    {resources.filter((r: any) => r.type === 'BOTOL').map((r: any) => (
                                         <option key={r.id} value={r.id}>
                                             {r.name} - Rp {parseFloat(r.price).toLocaleString('id-ID')}
                                         </option>

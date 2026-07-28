@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import NextAuthProvider from "@/components/providers/NextAuthProvider";
@@ -7,11 +7,14 @@ import PWAHandler from "@/components/pwa/PWAHandler";
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const viewport: Viewport = {
+    themeColor: "#C5A059",
+};
+
 export const metadata: Metadata = {
     title: "AROMIX | Premium Perfume Management",
     description: "High-end multi-tenant SaaS for perfume retail management.",
     manifest: "/manifest.json",
-    themeColor: "#C5A059",
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",

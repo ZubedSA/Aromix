@@ -27,35 +27,27 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+import useSWR from 'swr';
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
 export default function DashboardPage() {
     const { data: session } = useSession();
     const router = useRouter();
-    const [stats, setStats] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
+    const { data: stats, isLoading: loading } = useSWR(session?.user?.role !== 'ADMIN' ? '/api/dashboard/stats' : null, fetcher, {
+        revalidateOnFocus: false,
+        dedupingInterval: 5000
+    });
     const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
     const [isDesktopDropdownOpen, setIsDesktopDropdownOpen] = useState(false);
 
     useEffect(() => {
         if (session?.user?.role === 'ADMIN') {
             router.replace('/dashboard/admin');
-            return;
         }
-        fetchStats();
     }, [session, router]);
 
-    const fetchStats = async () => {
-        try {
-            const res = await fetch('/api/dashboard/stats');
-            const data = await res.json();
-            setStats(data);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (loading) return (
+    if (loading && !stats) return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center p-10 text-gray-400 gap-4">
             <div className="w-12 h-12 border-2 border-accent-gold/20 border-t-accent-gold rounded-full animate-spin" />
             <p className="text-sm font-bold uppercase tracking-widest animate-pulse">AROMIX System</p>

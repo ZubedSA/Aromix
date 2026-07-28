@@ -17,11 +17,15 @@ export class StoreService {
             // Transaksi hari ini dengan item-nya untuk menghitung omzet & laba
             prisma.transaction.findMany({
                 where: { storeId, createdAt: { gte: today } },
-                include: {
+                select: {
+                    totalAmount: true,
                     items: {
-                        include: {
-                            product: true,
-                            ingredient: true
+                        select: {
+                            quantity: true,
+                            purchasePrice: true,
+                            subtotal: true,
+                            product: { select: { purchasePrice: true } },
+                            ingredient: { select: { purchasePrice: true } }
                         }
                     }
                 }

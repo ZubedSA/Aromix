@@ -3,21 +3,78 @@ import { prisma } from "@/lib/prisma";
 export class TransactionService {
     /**
      * Prosedur utama untuk memproses penjualan premium.
-     * Menangani pemotongan stok bahan baku (untuk produk formula)
-     * atau pemotongan stok produk langsung.
+     * Menggunakan batching & eksekusi paralel (Promise.all) untuk kecepatan sub-detik.
      */
-    static async createTransaction(storeId: string, cashierName: string, items: { productId?: string, ingredientId?: string, quantity: number, isOwnBottle?: boolean, bottleId?: string }[], customerId?: string, paymentMethod?: string) {
+    static async createTransaction(
+        storeId: string,
+        cashierName: string,
+        items: { productId?: string, ingredientId?: string, quantity: number, isOwnBottle?: boolean, bottleId?: string }[],
+        customerId?: string,
+        paymentMethod?: string
+    ) {
         return await prisma.$transaction(async (tx) => {
+            const productIds = Array.from(new Set(items.filter(i => i.productId).map(i => i.productId as string)));
+            const ingredientIds = Array.from(new Set(items.filter(i => i.ingredientId).map(i => i.ingredientId as string)));
+            const bottleIds = Array.from(new Set(items.filter(i => !i.isOwnBottle && i.bottleId).map(i => i.bottleId as string)));
+
+            const allIngredientIds = Array.from(new Set([...ingredientIds, ...bottleIds]));
+
+            // Batch fetch all required products and ingredients in parallel
+            const [products, ingredients] = await Promise.all([
+                productIds.length > 0
+                    ? tx.product.findMany({
+                        where: { id: { in: productIds }, storeId },
+                        include: { formula: { include: { items: true } } }
+                    })
+                    : [],
+                allIngredientIds.length > 0
+                    ? tx.ingredient.findMany({
+                        where: { id: { in: allIngredientIds }, storeId }
+                    })
+                    : []
+            ]);
+
+            const productMap = new Map(products.map(p => [p.id, p]));
+            const ingredientMap = new Map(ingredients.map(i => [i.id, i]));
+
+            // Check if formulas reference additional sub-products or ingredients
+            const extraProductIds: string[] = [];
+            const extraIngredientIds: string[] = [];
+
+            for (const p of products) {
+                if (p.isFormula && p.formula) {
+                    for (const fi of p.formula.items) {
+                        if (fi.ingredientId && !ingredientMap.has(fi.ingredientId)) {
+                            extraIngredientIds.push(fi.ingredientId);
+                        }
+                        if (fi.productId && !productMap.has(fi.productId)) {
+                            extraProductIds.push(fi.productId);
+                        }
+                    }
+                }
+            }
+
+            if (extraProductIds.length > 0 || extraIngredientIds.length > 0) {
+                const [extraProducts, extraIngredients] = await Promise.all([
+                    extraProductIds.length > 0
+                        ? tx.product.findMany({ where: { id: { in: extraProductIds }, storeId } })
+                        : [],
+                    extraIngredientIds.length > 0
+                        ? tx.ingredient.findMany({ where: { id: { in: extraIngredientIds }, storeId } })
+                        : []
+                ]);
+                extraProducts.forEach(p => productMap.set(p.id, p as any));
+                extraIngredients.forEach(i => ingredientMap.set(i.id, i as any));
+            }
+
             let totalAmount = 0;
             const transactionItems = [];
+            const ingredientDecrements = new Map<string, { name: string; amount: number }>();
+            const productDecrements = new Map<string, { name: string; amount: number }>();
 
             for (const item of items) {
                 if (item.productId) {
-                    const product = await tx.product.findFirst({
-                        where: { id: item.productId, storeId },
-                        include: { formula: { include: { items: true } } }
-                    });
-
+                    const product = productMap.get(item.productId);
                     if (!product) throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan.`);
 
                     let subtotal = Number(product.price) * item.quantity;
@@ -26,38 +83,26 @@ export class TransactionService {
                         for (const formulaItem of product.formula.items) {
                             const neededQty = formulaItem.quantity * item.quantity;
                             if (formulaItem.ingredientId) {
-                                const updateCount = await tx.ingredient.updateMany({
-                                    where: { id: formulaItem.ingredientId, storeId, stock: { gte: neededQty } },
-                                    data: { stock: { decrement: neededQty } }
-                                });
-                                if (updateCount.count === 0) throw new Error(`Stok bahan baku '${formulaItem.ingredientId}' tidak mencukupi.`);
+                                const ing = ingredientMap.get(formulaItem.ingredientId);
+                                const curr = ingredientDecrements.get(formulaItem.ingredientId) || { name: ing?.name || 'Bahan baku', amount: 0 };
+                                ingredientDecrements.set(formulaItem.ingredientId, { name: curr.name, amount: curr.amount + neededQty });
                             } else if (formulaItem.productId) {
-                                const updateCount = await tx.product.updateMany({
-                                    where: { id: formulaItem.productId, storeId, stock: { gte: neededQty } },
-                                    data: { stock: { decrement: neededQty } }
-                                });
-                                if (updateCount.count === 0) throw new Error(`Stok produk dasar '${formulaItem.productId}' tidak mencukupi.`);
+                                const subP = productMap.get(formulaItem.productId);
+                                const curr = productDecrements.get(formulaItem.productId) || { name: subP?.name || 'Produk dasar', amount: 0 };
+                                productDecrements.set(formulaItem.productId, { name: curr.name, amount: curr.amount + neededQty });
                             }
                         }
                     } else {
-                        const updateCount = await tx.product.updateMany({
-                            where: { id: item.productId, storeId, stock: { gte: item.quantity } },
-                            data: { stock: { decrement: item.quantity } }
-                        });
-                        if (updateCount.count === 0) throw new Error(`Stok produk '${product.name}' tidak mencukupi.`);
+                        const curr = productDecrements.get(item.productId) || { name: product.name, amount: 0 };
+                        productDecrements.set(item.productId, { name: curr.name, amount: curr.amount + item.quantity });
                     }
 
                     if (!item.isOwnBottle && item.bottleId) {
-                        const bottle = await tx.ingredient.findFirst({
-                            where: { id: item.bottleId, type: 'BOTOL', storeId }
-                        });
-                        if (!bottle) throw new Error(`Botol tidak ditemukan.`);
+                        const bottle = ingredientMap.get(item.bottleId);
+                        if (!bottle || bottle.type !== 'BOTOL') throw new Error(`Botol tidak ditemukan.`);
 
-                        const updateCount = await tx.ingredient.updateMany({
-                            where: { id: item.bottleId, type: 'BOTOL', storeId, stock: { gte: item.quantity } },
-                            data: { stock: { decrement: item.quantity } }
-                        });
-                        if (updateCount.count === 0) throw new Error(`Stok botol '${bottle.name}' tidak mencukupi.`);
+                        const curr = ingredientDecrements.get(item.bottleId) || { name: bottle.name, amount: 0 };
+                        ingredientDecrements.set(item.bottleId, { name: curr.name, amount: curr.amount + item.quantity });
 
                         subtotal += Number(bottle.price) * item.quantity;
                     }
@@ -75,22 +120,14 @@ export class TransactionService {
                         bottleId: item.bottleId || null
                     });
                 } else if (item.ingredientId) {
-                    const ingredient = await tx.ingredient.findFirst({
-                        where: { id: item.ingredientId, storeId }
-                    });
-
+                    const ingredient = ingredientMap.get(item.ingredientId);
                     if (!ingredient) throw new Error(`Bahan baku dengan ID ${item.ingredientId} tidak ditemukan.`);
 
                     const subtotal = Number(ingredient.price) * item.quantity;
                     totalAmount += subtotal;
 
-                    // Potong stok bahan baku secara langsung
-                    const updateCount = await tx.ingredient.updateMany({
-                        where: { id: item.ingredientId, storeId, stock: { gte: item.quantity } },
-                        data: { stock: { decrement: item.quantity } }
-                    });
-
-                    if (updateCount.count === 0) throw new Error(`Stok '${ingredient.name}' tidak mencukupi.`);
+                    const curr = ingredientDecrements.get(item.ingredientId) || { name: ingredient.name, amount: 0 };
+                    ingredientDecrements.set(item.ingredientId, { name: curr.name, amount: curr.amount + item.quantity });
 
                     transactionItems.push({
                         productId: null,
@@ -104,6 +141,33 @@ export class TransactionService {
                     });
                 }
             }
+
+            // Eksekusi pemotongan stok secara paralel dengan Promise.all
+            const updatePromises: Promise<any>[] = [];
+
+            ingredientDecrements.forEach(({ name, amount }, ingId) => {
+                updatePromises.push(
+                    tx.ingredient.updateMany({
+                        where: { id: ingId, storeId, stock: { gte: amount } },
+                        data: { stock: { decrement: amount } }
+                    }).then(res => {
+                        if (res.count === 0) throw new Error(`Stok bahan baku '${name}' tidak mencukupi.`);
+                    })
+                );
+            });
+
+            productDecrements.forEach(({ name, amount }, prodId) => {
+                updatePromises.push(
+                    tx.product.updateMany({
+                        where: { id: prodId, storeId, stock: { gte: amount } },
+                        data: { stock: { decrement: amount } }
+                    }).then(res => {
+                        if (res.count === 0) throw new Error(`Stok produk '${name}' tidak mencukupi.`);
+                    })
+                );
+            });
+
+            await Promise.all(updatePromises);
 
             return await tx.transaction.create({
                 data: {

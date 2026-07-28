@@ -1,11 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import useSWR from 'swr';
 import { Plus, Search, Droplets, Trash2, Edit2, AlertCircle, X, Briefcase, Package } from 'lucide-react';
 
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
 export default function IngredientsPage() {
-    const [ingredients, setIngredients] = useState<any[]>([]);
-    const [products, setProducts] = useState<any[]>([]);
+    const { data: ingredientsData, mutate: mutateIngredients } = useSWR('/api/ingredients', fetcher, { revalidateOnFocus: false });
+    const { data: productsData, mutate: mutateProducts } = useSWR('/api/products', fetcher, { revalidateOnFocus: false });
+
+    const ingredients: any[] = Array.isArray(ingredientsData) ? ingredientsData : [];
+    const products: any[] = Array.isArray(productsData) ? productsData : [];
+
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -15,22 +22,11 @@ export default function IngredientsPage() {
     const [formData, setFormData] = useState({ name: '', unit: 'ml', stock: '0', type: 'BIANG', price: '0', purchasePrice: '0' });
     const [activeTab, setActiveTab] = useState('BIANG');
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
-        const [ingRes, prodRes] = await Promise.all([
-            fetch('/api/ingredients'),
-            fetch('/api/products')
-        ]);
-        const ingData = await ingRes.json();
-        const prodData = await prodRes.json();
-        setIngredients(ingData);
-        setProducts(prodData);
+    const fetchData = () => {
+        mutateIngredients();
+        mutateProducts();
     };
-
-    const fetchIngredients = fetchData; // Alias for backward compatibility if needed internally
+    const fetchIngredients = fetchData;
 
     const handleOpenAdd = () => {
         setSelectedIngredient(null);
@@ -151,14 +147,14 @@ export default function IngredientsPage() {
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="glass-panel rounded-2xl overflow-hidden">
+            {/* Desktop Table View */}
+            <div className="hidden md:block glass-panel rounded-2xl overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-background/50 text-gray-400 text-sm border-b border-border">
-                            <tr>
-                                <th className="px-6 py-4 font-medium uppercase tracking-wider">Nama Bahan</th>
-                                <th className="px-6 py-4 font-medium uppercase tracking-wider">Stok</th>
+                    <table className="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr className="bg-background/50 border-b border-border text-xs text-gray-400">
+                                <th className="px-6 py-4 font-medium uppercase tracking-wider">Nama barang / bahan</th>
+                                <th className="px-6 py-4 font-medium uppercase tracking-wider">Sisa Stok</th>
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider">Satuan</th>
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider">Harga Jual</th>
                                 <th className="px-6 py-4 font-medium uppercase tracking-wider text-right">Aksi</th>

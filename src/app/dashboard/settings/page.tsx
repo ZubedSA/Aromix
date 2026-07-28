@@ -392,8 +392,8 @@ export default function SettingsPage() {
             )}
 
             <div className="flex flex-col md:flex-row gap-8">
-                {/* Tabs Sidebar */}
-                <aside className="w-full md:w-64 space-y-2">
+                {/* Tabs Mobile Scrollable Segment / Desktop Sidebar */}
+                <aside className="w-full md:w-64 flex md:flex-col overflow-x-auto gap-2 pb-2 md:pb-0 scrollbar-none shrink-0">
                     <TabButton
                         active={activeTab === 'profile'}
                         onClick={() => setActiveTab('profile')}
@@ -1198,10 +1198,14 @@ function TabButton({ active, onClick, icon, label }: TabButtonProps) {
     return (
         <button
             onClick={onClick}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-sm font-medium ${active ? 'bg-surface text-foreground border border-border' : 'text-gray-500 hover:text-gray-300'}`}
+            className={`shrink-0 md:w-full flex items-center gap-2.5 px-4 py-3 rounded-xl transition-all text-sm font-medium min-h-[44px] whitespace-nowrap ${
+                active 
+                    ? 'bg-surface text-foreground border border-accent-gold/40 shadow-sm font-bold' 
+                    : 'text-gray-400 hover:text-gray-200 bg-surface/30 md:bg-transparent border border-border/30 md:border-transparent'
+            }`}
         >
             {icon}
-            {label}
+            <span>{label}</span>
         </button>
     );
 }

@@ -1,11 +1,17 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import useSWR from 'swr';
 import { Search, History, Printer, BarChart3, Calendar, Eye, MessageCircle, X } from 'lucide-react';
 
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
 export default function TransactionHistoryPage() {
-    const [transactions, setTransactions] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data: transactionsData = [], isLoading: loading } = useSWR('/api/transactions/history', fetcher, {
+        revalidateOnFocus: false,
+        dedupingInterval: 5000,
+    });
+    const transactions = Array.isArray(transactionsData) ? transactionsData : [];
     const [search, setSearch] = useState('');
 
     // Detail Modal States
@@ -41,8 +47,6 @@ export default function TransactionHistoryPage() {
     });
 
     useEffect(() => {
-        fetchTransactions();
-
         const savedReceipt = localStorage.getItem('aromix_receipt_settings');
         if (savedReceipt) {
             try { setReceiptSettings(JSON.parse(savedReceipt)); } catch (e) {}
@@ -52,20 +56,6 @@ export default function TransactionHistoryPage() {
             try { setWaSettings(JSON.parse(savedWa)); } catch (e) {}
         }
     }, []);
-
-    const fetchTransactions = () => {
-        setLoading(true);
-        fetch('/api/transactions/history')
-            .then(res => res.json())
-            .then(data => {
-                setTransactions(data);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error(err);
-                setLoading(false);
-            });
-    };
 
     const filteredTransactions = transactions.filter(t =>
         t.invoiceNumber.toLowerCase().includes(search.toLowerCase()) ||
@@ -231,7 +221,8 @@ export default function TransactionHistoryPage() {
                 </div>
             </header>
 
-            <div className="glass-panel rounded-2xl overflow-hidden">
+            {/* Desktop Table View */}
+            <div className="hidden md:block glass-panel rounded-2xl overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -308,19 +299,78 @@ export default function TransactionHistoryPage() {
                                     </td>
                                 </tr>
                             ))}
-                            {filteredTransactions.length === 0 && (
-                                <tr>
-                                    <td colSpan={7} className="px-6 py-20 text-center text-gray-500">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <History size={16} className="text-accent-gold" />
-                                            <p>Tidak ada transaksi ditemukan.</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            {/* Mobile Native Cards Stream View */}
+            <div className="md:hidden space-y-3.5">
+                {filteredTransactions.map((tx) => (
+                    <div key={tx.id} className="glass-panel p-4 rounded-2xl border border-border space-y-3">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <p className="font-mono text-xs font-bold text-accent-gold">{tx.invoiceNumber}</p>
+                                <p className="text-[11px] text-gray-400 mt-0.5">
+                                    {new Date(tx.createdAt).toLocaleString('id-ID', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })} • {tx.cashierName}
+                                </p>
+                            </div>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                tx.paymentMethod === 'TUNAI' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' :
+                                tx.paymentMethod === 'TRANSFER' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' :
+                                tx.paymentMethod === 'QRIS' ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20' :
+                                'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                            }`}>
+                                {tx.paymentMethod || 'TUNAI'}
+                            </span>
+                        </div>
+
+                        <div className="flex justify-between items-end pt-1 border-t border-border/40">
+                            <div>
+                                <span className="text-[10px] text-gray-500 uppercase tracking-wider block">Total Belanja</span>
+                                <span className="text-base font-bold text-accent-emerald">
+                                    Rp {parseFloat(tx.totalAmount).toLocaleString('id-ID')}
+                                </span>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => handleViewDetail(tx)}
+                                    className="p-2.5 bg-surface border border-border rounded-xl text-gray-300 hover:text-white min-h-[44px] min-w-[44px] flex items-center justify-center"
+                                    title="Detail"
+                                >
+                                    <Eye size={18} />
+                                </button>
+                                <button
+                                    onClick={() => handlePrint(tx)}
+                                    className="p-2.5 bg-surface border border-border rounded-xl text-accent-gold min-h-[44px] min-w-[44px] flex items-center justify-center"
+                                    title="Cetak Nota"
+                                >
+                                    <Printer size={18} />
+                                </button>
+                                <button
+                                    onClick={() => handleWhatsAppClick(tx)}
+                                    className="p-2.5 bg-surface border border-border rounded-xl text-green-400 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                                    title="Kirim WA"
+                                >
+                                    <MessageCircle size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+
+                {filteredTransactions.length === 0 && (
+                    <div className="glass-panel p-10 rounded-2xl text-center text-gray-500 space-y-2">
+                        <History size={24} className="mx-auto text-accent-gold" />
+                        <p className="text-sm">Tidak ada riwayat transaksi ditemukan.</p>
+                    </div>
+                )}
             </div>
 
             {/* View Detail Modal */}

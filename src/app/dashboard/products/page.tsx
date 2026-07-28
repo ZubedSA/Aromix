@@ -174,13 +174,15 @@ export default function ProductsPage() {
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => handleOpenEdit(product)}
-                                    className="p-2 text-gray-500 hover:text-white transition-colors"
+                                    className="p-2.5 bg-surface border border-border rounded-xl text-gray-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                                    title="Edit"
                                 >
                                     <Edit2 size={16} />
                                 </button>
                                 <button
                                     onClick={() => handleOpenDelete(product)}
-                                    className="p-2 text-gray-500 hover:text-red-500 transition-colors"
+                                    className="p-2.5 bg-surface border border-border rounded-xl text-gray-400 hover:text-red-500 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                                    title="Hapus"
                                 >
                                     <Trash2 size={16} />
                                 </button>

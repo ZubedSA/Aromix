@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -73,6 +74,7 @@ model Ingredient {
 
   @@index([storeId])
   @@index([name])
+  @@index([storeId, type])
 }
 
 model Product {
@@ -95,6 +97,7 @@ model Product {
   @@index([storeId])
   @@index([name])
   @@index([code])
+  @@index([storeId, isFormula])
 }
 
 model Formula {
@@ -142,6 +145,7 @@ model Transaction {
   @@index([storeId])
   @@index([createdAt])
   @@index([customerId])
+  @@index([storeId, createdAt(sort: Desc)])
 }
 
 model Customer {
@@ -158,6 +162,7 @@ model Customer {
 
   @@index([storeId])
   @@index([name])
+  @@index([storeId, name])
 }
 
 model Supplier {

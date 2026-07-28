@@ -1,10 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import useSWR from 'swr';
 import { Plus, Search, Users, Phone, Mail, Edit2, Trash2, X, AlertCircle } from 'lucide-react';
 
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
 export default function CustomersPage() {
-    const [customers, setCustomers] = useState<any[]>([]);
+    const { data: customersData, mutate: mutateCustomers } = useSWR('/api/customers', fetcher, { revalidateOnFocus: false });
+    const customers: any[] = Array.isArray(customersData) ? customersData : [];
+
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -13,14 +18,8 @@ export default function CustomersPage() {
 
     const [formData, setFormData] = useState({ name: '', phone: '', email: '', notes: '' });
 
-    useEffect(() => {
-        fetchCustomers();
-    }, []);
-
-    const fetchCustomers = async () => {
-        const res = await fetch('/api/customers');
-        const data = await res.json();
-        setCustomers(Array.isArray(data) ? data : []);
+    const fetchCustomers = () => {
+        mutateCustomers();
     };
 
     const handleOpenAdd = () => {
@@ -117,26 +116,45 @@ export default function CustomersPage() {
                                 <Users className="text-accent-gold" />
                             </div>
                             <div className="flex gap-2">
-                                <button onClick={() => handleOpenEdit(customer)} className="p-2 text-gray-500 hover:text-white transition-colors">
+                                {customer.phone && (
+                                    <a
+                                        href={`https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-2.5 bg-surface border border-border rounded-xl text-green-400 hover:text-green-300 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                                        title="WhatsApp"
+                                    >
+                                        <Phone size={16} />
+                                    </a>
+                                )}
+                                <button
+                                    onClick={() => handleOpenEdit(customer)}
+                                    className="p-2.5 bg-surface border border-border rounded-xl text-gray-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                                    title="Edit"
+                                >
                                     <Edit2 size={16} />
                                 </button>
-                                <button onClick={() => handleOpenDelete(customer)} className="p-2 text-gray-500 hover:text-red-500 transition-colors">
+                                <button
+                                    onClick={() => handleOpenDelete(customer)}
+                                    className="p-2.5 bg-surface border border-border rounded-xl text-gray-400 hover:text-red-500 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                                    title="Hapus"
+                                >
                                     <Trash2 size={16} />
                                 </button>
                             </div>
                         </div>
 
-                        <h3 className="text-xl font-bold mb-4">{customer.name}</h3>
+                        <h3 className="text-xl font-bold mb-3 text-white">{customer.name}</h3>
 
-                        <div className="space-y-3 mb-6">
+                        <div className="space-y-2 mb-6">
                             {customer.phone && (
-                                <div className="flex items-center gap-2 text-sm text-gray-400">
+                                <div className="flex items-center gap-2 text-sm text-gray-300">
                                     <Phone size={14} className="text-accent-emerald" />
                                     <span>{customer.phone}</span>
                                 </div>
                             )}
                             {customer.email && (
-                                <div className="flex items-center gap-2 text-sm text-gray-400">
+                                <div className="flex items-center gap-2 text-sm text-gray-300">
                                     <Mail size={14} className="text-blue-400" />
                                     <span className="truncate">{customer.email}</span>
                                 </div>
